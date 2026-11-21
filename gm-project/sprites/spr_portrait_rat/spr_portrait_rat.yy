@@ -14,8 +14,8 @@
   "frames": [
     {
       "$GMSpriteFrame": "",
-      "%Name": "6bb16570-8e78-48fb-893b-8c806d2d2a70",
-      "name": "6bb16570-8e78-48fb-893b-8c806d2d2a70",
+      "%Name": "1adb328c-ebaf-42c8-ae34-760c685db4d6",
+      "name": "1adb328c-ebaf-42c8-ae34-760c685db4d6",
       "resourceType": "GMSpriteFrame",
       "resourceVersion": "2.0"
     }
@@ -27,11 +27,11 @@
   "layers": [
     {
       "$GMImageLayer": "",
-      "%Name": "4ded292b-abee-4f4d-8222-7de0de170b42",
+      "%Name": "0d914b80-db02-4b10-9a96-bd40ba28d329",
       "blendMode": 0,
       "displayName": "default",
       "isLocked": false,
-      "name": "4ded292b-abee-4f4d-8222-7de0de170b42",
+      "name": "0d914b80-db02-4b10-9a96-bd40ba28d329",
       "opacity": 100.0,
       "resourceType": "GMImageLayer",
       "resourceVersion": "2.0",
@@ -100,7 +100,7 @@
                 "0": {
                   "$SpriteFrameKeyframe": "",
                   "Id": {
-                    "name": "6bb16570-8e78-48fb-893b-8c806d2d2a70",
+                    "name": "1adb328c-ebaf-42c8-ae34-760c685db4d6",
                     "path": "sprites/spr_portrait_rat/spr_portrait_rat.yy"
                   },
                   "resourceType": "SpriteFrameKeyframe",
@@ -108,7 +108,7 @@
                 }
               },
               "Disabled": false,
-              "id": "9bb7057a-a536-4d8a-a9c7-35ac9b285b69",
+              "id": "860be35e-556e-47cb-9465-262fe7448531",
               "IsCreationKey": false,
               "Key": 0.0,
               "Length": 1.0,

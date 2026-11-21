@@ -50,7 +50,17 @@
       "resourceVersion": "2.0"
     }
   ],
-  "IncludedFiles": [],
+  "IncludedFiles": [
+    {
+      "$GMIncludedFile": "",
+      "%Name": "ui_font.ttf",
+      "CopyToMask": -1,
+      "filePath": "datafiles",
+      "name": "ui_font.ttf",
+      "resourceType": "GMIncludedFile",
+      "resourceVersion": "2.0"
+    }
+  ],
   "isEcma": false,
   "LibraryEmitters": [],
   "MetaData": {

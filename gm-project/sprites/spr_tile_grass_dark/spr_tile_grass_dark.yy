@@ -14,8 +14,8 @@
   "frames": [
     {
       "$GMSpriteFrame": "",
-      "%Name": "92b009f9-a290-492a-a37c-bcdd94b3f28c",
-      "name": "92b009f9-a290-492a-a37c-bcdd94b3f28c",
+      "%Name": "27dd5879-28c0-4ef8-b80e-dc6e26f9b020",
+      "name": "27dd5879-28c0-4ef8-b80e-dc6e26f9b020",
       "resourceType": "GMSpriteFrame",
       "resourceVersion": "2.0"
     }
@@ -27,11 +27,11 @@
   "layers": [
     {
       "$GMImageLayer": "",
-      "%Name": "d74916cc-1478-479d-a484-a70400e2a1e0",
+      "%Name": "947d2a32-7d55-4302-98c1-e12244d70903",
       "blendMode": 0,
       "displayName": "default",
       "isLocked": false,
-      "name": "d74916cc-1478-479d-a484-a70400e2a1e0",
+      "name": "947d2a32-7d55-4302-98c1-e12244d70903",
       "opacity": 100.0,
       "resourceType": "GMImageLayer",
       "resourceVersion": "2.0",
@@ -100,7 +100,7 @@
                 "0": {
                   "$SpriteFrameKeyframe": "",
                   "Id": {
-                    "name": "92b009f9-a290-492a-a37c-bcdd94b3f28c",
+                    "name": "27dd5879-28c0-4ef8-b80e-dc6e26f9b020",
                     "path": "sprites/spr_tile_grass_dark/spr_tile_grass_dark.yy"
                   },
                   "resourceType": "SpriteFrameKeyframe",
@@ -108,7 +108,7 @@
                 }
               },
               "Disabled": false,
-              "id": "465355f7-fc96-4a66-a2db-680808d1d2ac",
+              "id": "d7f14e3b-5489-402f-a68b-36d66f2fe5ae",
               "IsCreationKey": false,
               "Key": 0.0,
               "Length": 1.0,

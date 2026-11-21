@@ -14,8 +14,8 @@
   "frames": [
     {
       "$GMSpriteFrame": "",
-      "%Name": "8694229b-5c8f-4ac4-a250-575cd9e06f38",
-      "name": "8694229b-5c8f-4ac4-a250-575cd9e06f38",
+      "%Name": "1d3864ba-d120-45e0-b67c-859f41106ee6",
+      "name": "1d3864ba-d120-45e0-b67c-859f41106ee6",
       "resourceType": "GMSpriteFrame",
       "resourceVersion": "2.0"
     }
@@ -27,11 +27,11 @@
   "layers": [
     {
       "$GMImageLayer": "",
-      "%Name": "26072dc8-3790-409f-b701-9c762d560f4f",
+      "%Name": "52509b1f-3a31-4530-8374-e71b2da334e8",
       "blendMode": 0,
       "displayName": "default",
       "isLocked": false,
-      "name": "26072dc8-3790-409f-b701-9c762d560f4f",
+      "name": "52509b1f-3a31-4530-8374-e71b2da334e8",
       "opacity": 100.0,
       "resourceType": "GMImageLayer",
       "resourceVersion": "2.0",
@@ -100,7 +100,7 @@
                 "0": {
                   "$SpriteFrameKeyframe": "",
                   "Id": {
-                    "name": "8694229b-5c8f-4ac4-a250-575cd9e06f38",
+                    "name": "1d3864ba-d120-45e0-b67c-859f41106ee6",
                     "path": "sprites/spr_bebechad_top/spr_bebechad_top.yy"
                   },
                   "resourceType": "SpriteFrameKeyframe",
@@ -108,7 +108,7 @@
                 }
               },
               "Disabled": false,
-              "id": "78a6207e-4698-4d29-bc3d-0edc98dd9859",
+              "id": "139f06f9-0d98-48c7-95fa-34647d91574a",
               "IsCreationKey": false,
               "Key": 0.0,
               "Length": 1.0,

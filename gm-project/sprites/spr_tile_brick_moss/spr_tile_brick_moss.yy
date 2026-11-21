@@ -14,8 +14,8 @@
   "frames": [
     {
       "$GMSpriteFrame": "",
-      "%Name": "3f8d38a0-7b44-4eee-81d4-87baf36b06e1",
-      "name": "3f8d38a0-7b44-4eee-81d4-87baf36b06e1",
+      "%Name": "87ec8a44-169e-4f6a-85c5-44b2d511924a",
+      "name": "87ec8a44-169e-4f6a-85c5-44b2d511924a",
       "resourceType": "GMSpriteFrame",
       "resourceVersion": "2.0"
     }
@@ -27,11 +27,11 @@
   "layers": [
     {
       "$GMImageLayer": "",
-      "%Name": "3ad96f1c-199c-43c7-b2a1-5ed1a8184e6f",
+      "%Name": "e500c673-0353-4bdf-a411-2c61915d75c3",
       "blendMode": 0,
       "displayName": "default",
       "isLocked": false,
-      "name": "3ad96f1c-199c-43c7-b2a1-5ed1a8184e6f",
+      "name": "e500c673-0353-4bdf-a411-2c61915d75c3",
       "opacity": 100.0,
       "resourceType": "GMImageLayer",
       "resourceVersion": "2.0",
@@ -100,7 +100,7 @@
                 "0": {
                   "$SpriteFrameKeyframe": "",
                   "Id": {
-                    "name": "3f8d38a0-7b44-4eee-81d4-87baf36b06e1",
+                    "name": "87ec8a44-169e-4f6a-85c5-44b2d511924a",
                     "path": "sprites/spr_tile_brick_moss/spr_tile_brick_moss.yy"
                   },
                   "resourceType": "SpriteFrameKeyframe",
@@ -108,7 +108,7 @@
                 }
               },
               "Disabled": false,
-              "id": "27eb17e3-227e-49c2-a0b0-cf1c991f3707",
+              "id": "93e8a160-b112-41da-b59f-745525d58fa5",
               "IsCreationKey": false,
               "Key": 0.0,
               "Length": 1.0,

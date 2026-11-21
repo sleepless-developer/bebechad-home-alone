@@ -14,8 +14,8 @@
   "frames": [
     {
       "$GMSpriteFrame": "",
-      "%Name": "a5123b91-04a5-4fcb-9f20-557b00194703",
-      "name": "a5123b91-04a5-4fcb-9f20-557b00194703",
+      "%Name": "f0dea569-2603-4fd7-b866-2fcdcc3afc9b",
+      "name": "f0dea569-2603-4fd7-b866-2fcdcc3afc9b",
       "resourceType": "GMSpriteFrame",
       "resourceVersion": "2.0"
     }
@@ -27,11 +27,11 @@
   "layers": [
     {
       "$GMImageLayer": "",
-      "%Name": "ad40c6fb-c965-4d8b-96e9-44a1c1336d72",
+      "%Name": "716b3117-a773-4c88-8a82-148793138936",
       "blendMode": 0,
       "displayName": "default",
       "isLocked": false,
-      "name": "ad40c6fb-c965-4d8b-96e9-44a1c1336d72",
+      "name": "716b3117-a773-4c88-8a82-148793138936",
       "opacity": 100.0,
       "resourceType": "GMImageLayer",
       "resourceVersion": "2.0",
@@ -100,7 +100,7 @@
                 "0": {
                   "$SpriteFrameKeyframe": "",
                   "Id": {
-                    "name": "a5123b91-04a5-4fcb-9f20-557b00194703",
+                    "name": "f0dea569-2603-4fd7-b866-2fcdcc3afc9b",
                     "path": "sprites/spr_tile_grass_overlay/spr_tile_grass_overlay.yy"
                   },
                   "resourceType": "SpriteFrameKeyframe",
@@ -108,7 +108,7 @@
                 }
               },
               "Disabled": false,
-              "id": "6cd72387-4a85-4bbf-b4a3-7f8253af7195",
+              "id": "609df636-ff21-485e-83f9-5d4dc5cb62cb",
               "IsCreationKey": false,
               "Key": 0.0,
               "Length": 1.0,

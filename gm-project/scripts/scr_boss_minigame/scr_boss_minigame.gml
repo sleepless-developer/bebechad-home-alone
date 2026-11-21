@@ -16,6 +16,7 @@ function scr_dialogue_init() {
     global.mg_key_idx = 0;
     global.mg_timer = 0;
     global.mg_max_timer = 270; // 4.5s at 60fps
+    global.mg_perfect_bar = false;
 }
 
 function scr_dialogue_push(_speaker, _portrait_spr, _text) {
@@ -57,6 +58,7 @@ function scr_minigame_start(_boss_inst, _combo_len) {
     global.mg_dir = 1;
     global.mg_timer = 270;
     global.mg_max_timer = 270;
+    global.mg_perfect_bar = false;
     global.mg_key_idx = 0;
     global.mg_keys = [];
     var _pool = [

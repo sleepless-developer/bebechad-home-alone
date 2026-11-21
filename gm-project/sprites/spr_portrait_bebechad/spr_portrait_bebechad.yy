@@ -14,8 +14,8 @@
   "frames": [
     {
       "$GMSpriteFrame": "",
-      "%Name": "f2b618f8-baa2-47d3-870a-0fbb68bf0538",
-      "name": "f2b618f8-baa2-47d3-870a-0fbb68bf0538",
+      "%Name": "fe2c384e-2814-4fc8-ab90-6adbe5cb6fce",
+      "name": "fe2c384e-2814-4fc8-ab90-6adbe5cb6fce",
       "resourceType": "GMSpriteFrame",
       "resourceVersion": "2.0"
     }
@@ -27,11 +27,11 @@
   "layers": [
     {
       "$GMImageLayer": "",
-      "%Name": "1f40b68b-6d2d-4ace-a3bc-3172f6530b4f",
+      "%Name": "7a6eb802-4778-4973-9b4c-3701c229f4af",
       "blendMode": 0,
       "displayName": "default",
       "isLocked": false,
-      "name": "1f40b68b-6d2d-4ace-a3bc-3172f6530b4f",
+      "name": "7a6eb802-4778-4973-9b4c-3701c229f4af",
       "opacity": 100.0,
       "resourceType": "GMImageLayer",
       "resourceVersion": "2.0",
@@ -100,7 +100,7 @@
                 "0": {
                   "$SpriteFrameKeyframe": "",
                   "Id": {
-                    "name": "f2b618f8-baa2-47d3-870a-0fbb68bf0538",
+                    "name": "fe2c384e-2814-4fc8-ab90-6adbe5cb6fce",
                     "path": "sprites/spr_portrait_bebechad/spr_portrait_bebechad.yy"
                   },
                   "resourceType": "SpriteFrameKeyframe",
@@ -108,7 +108,7 @@
                 }
               },
               "Disabled": false,
-              "id": "c1ed03d1-8794-4059-846a-ddc243ea85ee",
+              "id": "3ae9e286-47b9-43d3-a65a-3ccf13cd1b7e",
               "IsCreationKey": false,
               "Key": 0.0,
               "Length": 1.0,

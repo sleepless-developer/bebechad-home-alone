@@ -1,3 +1,9 @@
+if (variable_global_exists("ui_font") && global.ui_font != -1 && font_exists(global.ui_font)) {
+    draw_set_font(global.ui_font);
+}
+draw_set_halign(fa_left);
+draw_set_valign(fa_top);
+
 var _gw = display_get_gui_width();
 var _gh = display_get_gui_height();
 
@@ -22,7 +28,7 @@ if (instance_exists(obj_rat_boss)) {
     draw_set_color(make_color_rgb(212, 68, 62));
     draw_rectangle(_gw * 0.5 - 220, 70, _gw * 0.5 - 220 + 440 * _bf, 90, false);
     draw_set_color(c_white);
-    draw_text(_gw * 0.5 - 120, 72, "КРЫСИНЫЙ БОСС (" + string(max(0, ceil(_b.hp))) + "/" + string(_b.max_hp) + ")");
+    draw_text(_gw * 0.5 - 140, 72, global.boss_name + " (" + string(max(0, ceil(_b.hp))) + "/" + string(_b.max_hp) + ")");
 }
 
 // Catnip Shop Modal (Stardew General Store Ledger!)

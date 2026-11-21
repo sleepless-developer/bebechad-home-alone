@@ -14,8 +14,8 @@
   "frames": [
     {
       "$GMSpriteFrame": "",
-      "%Name": "f421c7c6-eefc-407e-806e-6f57d219f406",
-      "name": "f421c7c6-eefc-407e-806e-6f57d219f406",
+      "%Name": "7e76a31d-06b3-4fdc-8ff9-ee466620b530",
+      "name": "7e76a31d-06b3-4fdc-8ff9-ee466620b530",
       "resourceType": "GMSpriteFrame",
       "resourceVersion": "2.0"
     }
@@ -27,11 +27,11 @@
   "layers": [
     {
       "$GMImageLayer": "",
-      "%Name": "878477c4-ef55-42bd-b1fb-7887637428d3",
+      "%Name": "3770f08e-41bd-4e92-aefb-05162c98709e",
       "blendMode": 0,
       "displayName": "default",
       "isLocked": false,
-      "name": "878477c4-ef55-42bd-b1fb-7887637428d3",
+      "name": "3770f08e-41bd-4e92-aefb-05162c98709e",
       "opacity": 100.0,
       "resourceType": "GMImageLayer",
       "resourceVersion": "2.0",
@@ -100,7 +100,7 @@
                 "0": {
                   "$SpriteFrameKeyframe": "",
                   "Id": {
-                    "name": "f421c7c6-eefc-407e-806e-6f57d219f406",
+                    "name": "7e76a31d-06b3-4fdc-8ff9-ee466620b530",
                     "path": "sprites/spr_rat_boss_top/spr_rat_boss_top.yy"
                   },
                   "resourceType": "SpriteFrameKeyframe",
@@ -108,7 +108,7 @@
                 }
               },
               "Disabled": false,
-              "id": "10ebc94b-2e99-49d3-9595-203be04f079c",
+              "id": "0b167ff1-5c69-49c8-8009-5a1cefd7c544",
               "IsCreationKey": false,
               "Key": 0.0,
               "Length": 1.0,

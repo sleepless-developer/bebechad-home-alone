@@ -36,6 +36,21 @@ if (global.spawn_timer <= 0 && instance_number(obj_mouse) < min(45, 8 + global.w
     }
 }
 
+// Room discovery monologues
+if (instance_exists(obj_bebechad)) {
+    var _rname = scr_house_get_room_name(obj_bebechad.x, obj_bebechad.y);
+    if (_rname == "Кухня" && !global.visited_kitchen) {
+        global.visited_kitchen = true;
+        scr_dialogue_push("Bebechad", spr_portrait_cat_angry, "Эй! Они пытаются взломать ХОЛОДИЛЬНИК! Там мой тунец!");
+    } else if (_rname == "Подвал" && !global.visited_basement) {
+        global.visited_basement = true;
+        scr_dialogue_push("Bebechad", spr_portrait_bebechad, "Сырой кирпичный подвал... Явно отсюда лезут эти усатые бандиты.");
+    } else if (_rname == "Задний Двор" && !global.visited_yard) {
+        global.visited_yard = true;
+        scr_dialogue_push("Bebechad", spr_portrait_bebechad, "Свежий воздух, мягкая травка... И отличная арена для охоты!");
+    }
+}
+
 // Spawn Rat Boss
 global.boss_timer -= 1;
 if (global.boss_timer <= 0 && !instance_exists(obj_rat_boss) && instance_exists(obj_bebechad)) {
@@ -44,8 +59,20 @@ if (global.boss_timer <= 0 && !instance_exists(obj_rat_boss) && instance_exists(
     var _bx = clamp(obj_bebechad.x + 260, 120, global.world_w - 120);
     var _by = clamp(obj_bebechad.y, 120, global.world_h - 120);
     instance_create_layer(_bx, _by, "Instances", obj_rat_boss);
-    scr_dialogue_push("Крысиный Босс #" + string(global.boss_count), spr_portrait_rat, "Хе-хе! Хозяев нет — теперь этот холодильник и весь дом НАШИ!");
-    scr_dialogue_push("Bebechad", spr_portrait_cat_angry, "МОЙ ХОЛОДИЛЬНИК?! Ты только что подписал себе приговор!");
+    var _bidx = (global.boss_count - 1) mod 3;
+    if (_bidx == 0) {
+        global.boss_name = "Барон Сырник";
+        scr_dialogue_push(global.boss_name, spr_portrait_rat, "Хе-хе! Хозяев нет — теперь этот холодильник и весь дом НАШИ!");
+        scr_dialogue_push("Bebechad", spr_portrait_cat_angry, "МОЙ ХОЛОДИЛЬНИК?! Ты только что подписал себе приговор!");
+    } else if (_bidx == 1) {
+        global.boss_name = "Крысолов из Подвала";
+        scr_dialogue_push(global.boss_name, spr_portrait_rat, "Ты разбил отряд Барона?! Тогда познай ярость подвального короля!");
+        scr_dialogue_push("Bebechad", spr_portrait_bebechad, "Корона криво сидит. Сейчас поправлю — прямо лапой.");
+    } else {
+        global.boss_name = "Император Хруст";
+        scr_dialogue_push(global.boss_name, spr_portrait_rat, "Склонись перед Императором! Весь корм и вся мята принадлежат крысам!");
+        scr_dialogue_push("Bebechad", spr_portrait_cat_angry, "МЯТУ?! НА СВЯТОЕ ПОСЯГНУЛ?! Тебе точно конец!");
+    }
 }
 
 // Smooth camera follow centered on Bebechad

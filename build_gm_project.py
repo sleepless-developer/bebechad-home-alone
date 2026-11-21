@@ -10,11 +10,13 @@ import os
 import shutil
 import struct
 import uuid
+import zipfile
 import zlib
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 RAW_DIR = os.path.join(ROOT, "assets-raw")
 GM_DIR = os.path.join(ROOT, "gm-project")
+EXPORT_DIR = os.path.join(ROOT, "export")
 
 
 def write_png(path, w, h, rgba_bytes):
@@ -712,6 +714,7 @@ function scr_dialogue_init() {
     global.mg_key_idx = 0;
     global.mg_timer = 0;
     global.mg_max_timer = 270; // 4.5s at 60fps
+    global.mg_perfect_bar = false;
 }
 
 function scr_dialogue_push(_speaker, _portrait_spr, _text) {
@@ -753,6 +756,7 @@ function scr_minigame_start(_boss_inst, _combo_len) {
     global.mg_dir = 1;
     global.mg_timer = 270;
     global.mg_max_timer = 270;
+    global.mg_perfect_bar = false;
     global.mg_key_idx = 0;
     global.mg_keys = [];
     var _pool = [
@@ -926,6 +930,14 @@ function scr_minigame_draw_gui(_gw, _gh) {
 # ==============================================================================
 OBJ_GAME_CREATE = r"""
 randomize();
+display_set_gui_size(1280, 720);
+
+// Load bundled open-source Cyrillic TTF font (SIL OFL LiberationSans-Bold)
+global.ui_font = -1;
+if (file_exists("ui_font.ttf")) {
+    global.ui_font = font_add("ui_font.ttf", 14, false, false, 0, 0);
+}
+
 scr_house_init();
 scr_catnip_shop_init();
 scr_dialogue_init();
@@ -936,6 +948,10 @@ global.run_time = 0;
 global.spawn_timer = 40;
 global.boss_timer = 60 * 35; // First Rat Boss at 35s (or press [T] anytime!)
 global.boss_count = 0;
+global.boss_name = "Барон Сырник";
+global.visited_kitchen = false;
+global.visited_basement = false;
+global.visited_yard = false;
 
 instance_create_layer(480, 320, "Instances", obj_bebechad);
 
@@ -943,6 +959,13 @@ instance_create_layer(480, 320, "Instances", obj_bebechad);
 scr_dialogue_push("Bebechad", spr_portrait_bebechad, "Хозяева уехали. Весь дом в моём распоряжении. Время чиллить.");
 scr_dialogue_push("Bebechad", spr_portrait_cat_angry, "СТОП... ЧТО ЭТО ШУРШИТ НА КУХНЕ И В ПОДВАЛЕ?! МЫШИ?!");
 scr_dialogue_push("Bebechad", spr_portrait_bebechad, "Ладно. Разминаем когти. За кошачью мяту я разнесу всю их банду.");
+"""
+
+OBJ_GAME_CLEANUP = r"""
+if (variable_global_exists("ui_font") && global.ui_font != -1 && font_exists(global.ui_font)) {
+    font_delete(global.ui_font);
+    global.ui_font = -1;
+}
 """
 
 OBJ_GAME_STEP = r"""
@@ -984,6 +1007,21 @@ if (global.spawn_timer <= 0 && instance_number(obj_mouse) < min(45, 8 + global.w
     }
 }
 
+// Room discovery monologues
+if (instance_exists(obj_bebechad)) {
+    var _rname = scr_house_get_room_name(obj_bebechad.x, obj_bebechad.y);
+    if (_rname == "Кухня" && !global.visited_kitchen) {
+        global.visited_kitchen = true;
+        scr_dialogue_push("Bebechad", spr_portrait_cat_angry, "Эй! Они пытаются взломать ХОЛОДИЛЬНИК! Там мой тунец!");
+    } else if (_rname == "Подвал" && !global.visited_basement) {
+        global.visited_basement = true;
+        scr_dialogue_push("Bebechad", spr_portrait_bebechad, "Сырой кирпичный подвал... Явно отсюда лезут эти усатые бандиты.");
+    } else if (_rname == "Задний Двор" && !global.visited_yard) {
+        global.visited_yard = true;
+        scr_dialogue_push("Bebechad", spr_portrait_bebechad, "Свежий воздух, мягкая травка... И отличная арена для охоты!");
+    }
+}
+
 // Spawn Rat Boss
 global.boss_timer -= 1;
 if (global.boss_timer <= 0 && !instance_exists(obj_rat_boss) && instance_exists(obj_bebechad)) {
@@ -992,8 +1030,20 @@ if (global.boss_timer <= 0 && !instance_exists(obj_rat_boss) && instance_exists(
     var _bx = clamp(obj_bebechad.x + 260, 120, global.world_w - 120);
     var _by = clamp(obj_bebechad.y, 120, global.world_h - 120);
     instance_create_layer(_bx, _by, "Instances", obj_rat_boss);
-    scr_dialogue_push("Крысиный Босс #" + string(global.boss_count), spr_portrait_rat, "Хе-хе! Хозяев нет — теперь этот холодильник и весь дом НАШИ!");
-    scr_dialogue_push("Bebechad", spr_portrait_cat_angry, "МОЙ ХОЛОДИЛЬНИК?! Ты только что подписал себе приговор!");
+    var _bidx = (global.boss_count - 1) mod 3;
+    if (_bidx == 0) {
+        global.boss_name = "Барон Сырник";
+        scr_dialogue_push(global.boss_name, spr_portrait_rat, "Хе-хе! Хозяев нет — теперь этот холодильник и весь дом НАШИ!");
+        scr_dialogue_push("Bebechad", spr_portrait_cat_angry, "МОЙ ХОЛОДИЛЬНИК?! Ты только что подписал себе приговор!");
+    } else if (_bidx == 1) {
+        global.boss_name = "Крысолов из Подвала";
+        scr_dialogue_push(global.boss_name, spr_portrait_rat, "Ты разбил отряд Барона?! Тогда познай ярость подвального короля!");
+        scr_dialogue_push("Bebechad", spr_portrait_bebechad, "Корона криво сидит. Сейчас поправлю — прямо лапой.");
+    } else {
+        global.boss_name = "Император Хруст";
+        scr_dialogue_push(global.boss_name, spr_portrait_rat, "Склонись перед Императором! Весь корм и вся мята принадлежат крысам!");
+        scr_dialogue_push("Bebechad", spr_portrait_cat_angry, "МЯТУ?! НА СВЯТОЕ ПОСЯГНУЛ?! Тебе точно конец!");
+    }
 }
 
 // Smooth camera follow centered on Bebechad
@@ -1014,6 +1064,12 @@ scr_house_draw();
 """
 
 OBJ_GAME_DRAW_GUI = r"""
+if (variable_global_exists("ui_font") && global.ui_font != -1 && font_exists(global.ui_font)) {
+    draw_set_font(global.ui_font);
+}
+draw_set_halign(fa_left);
+draw_set_valign(fa_top);
+
 var _gw = display_get_gui_width();
 var _gh = display_get_gui_height();
 
@@ -1038,7 +1094,7 @@ if (instance_exists(obj_rat_boss)) {
     draw_set_color(make_color_rgb(212, 68, 62));
     draw_rectangle(_gw * 0.5 - 220, 70, _gw * 0.5 - 220 + 440 * _bf, 90, false);
     draw_set_color(c_white);
-    draw_text(_gw * 0.5 - 120, 72, "КРЫСИНЫЙ БОСС (" + string(max(0, ceil(_b.hp))) + "/" + string(_b.max_hp) + ")");
+    draw_text(_gw * 0.5 - 140, 72, global.boss_name + " (" + string(max(0, ceil(_b.hp))) + "/" + string(_b.max_hp) + ")");
 }
 
 // Catnip Shop Modal (Stardew General Store Ledger!)
@@ -1563,7 +1619,27 @@ def build_room():
                 "xview": 160,
                 "yport": 0,
                 "yview": 140,
-            }
+            },
+            *[
+                {
+                    "hborder": 32,
+                    "hport": 768,
+                    "hspeed": -1,
+                    "hview": 768,
+                    "inherit": False,
+                    "objectId": None,
+                    "vborder": 32,
+                    "visible": False,
+                    "vspeed": -1,
+                    "wport": 1024,
+                    "wview": 1024,
+                    "xport": 0,
+                    "xview": 0,
+                    "yport": 0,
+                    "yview": 0,
+                }
+                for _ in range(7)
+            ],
         ],
         "viewSettings": {
             "clearDisplayBuffer": True,
@@ -1669,6 +1745,7 @@ def main():
                 (3, 0, "Step_0.gml", OBJ_GAME_STEP),
                 (8, 0, "Draw_0.gml", OBJ_GAME_DRAW),
                 (8, 64, "Draw_64.gml", OBJ_GAME_DRAW_GUI),
+                (12, 0, "CleanUp_0.gml", OBJ_GAME_CLEANUP),
             ],
         )
     )
@@ -1747,6 +1824,25 @@ def main():
         save_yy(os.path.join(GM_DIR, "folders", f"{fn}.yy"), fyy)
         folder_nodes.append(fyy)
 
+    # Included Files: bundle open-source Cyrillic font (LiberationSans-Bold, SIL OFL 1.1)
+    included_files = []
+    font_src = os.path.join(RAW_DIR, "ui_font.ttf")
+    if os.path.exists(font_src):
+        datafiles_dir = os.path.join(GM_DIR, "datafiles")
+        os.makedirs(datafiles_dir, exist_ok=True)
+        shutil.copy2(font_src, os.path.join(datafiles_dir, "ui_font.ttf"))
+        included_files.append(
+            {
+                "$GMIncludedFile": "",
+                "%Name": "ui_font.ttf",
+                "CopyToMask": -1,
+                "filePath": "datafiles",
+                "name": "ui_font.ttf",
+                "resourceType": "GMIncludedFile",
+                "resourceVersion": "2.0",
+            }
+        )
+
     yyp = {
         "$GMProject": "v1",
         "%Name": "BebechadHomeAlone",
@@ -1763,7 +1859,7 @@ def main():
         "configs": {"children": [], "name": "Default"},
         "defaultScriptType": 1,
         "Folders": folder_nodes,
-        "IncludedFiles": [],
+        "IncludedFiles": included_files,
         "isEcma": False,
         "LibraryEmitters": [],
         "MetaData": {"IDEVersion": "2024.11.0.179"},
@@ -1795,6 +1891,155 @@ def main():
     }
     save_yy(os.path.join(GM_DIR, "BebechadHomeAlone.yyp"), yyp)
     print(f"Generated GameMaker LTS 2026 project with {len(resources)} resources at {GM_DIR}")
+    audit_gm_project()
+    build_transfer_packages()
+
+
+def audit_gm_project():
+    """Verify every .yyp/.yy JSON, sprite PNG, GML script, event, room, and IncludedFile."""
+    yyp_path = os.path.join(GM_DIR, "BebechadHomeAlone.yyp")
+    with open(yyp_path, "r", encoding="utf-8") as f:
+        yyp = json.load(f)
+
+    errors = []
+    # Check all referenced resources
+    for r in yyp.get("resources", []):
+        rel = r["id"]["path"]
+        full = os.path.join(GM_DIR, rel.replace("/", os.sep))
+        if not os.path.isfile(full):
+            errors.append(f"Missing resource: {rel}")
+            continue
+        with open(full, "r", encoding="utf-8") as rf:
+            data = json.load(rf)
+        rtype = data.get("resourceType")
+        if rtype == "GMSprite":
+            sdir = os.path.dirname(full)
+            for fr in data.get("frames", []):
+                fid = fr["name"]
+                fpng = os.path.join(sdir, f"{fid}.png")
+                if not os.path.isfile(fpng):
+                    errors.append(f"Missing sprite frame PNG: {fpng}")
+                else:
+                    with open(fpng, "rb") as pf:
+                        if pf.read(8) != b"\x89PNG\r\n\x1a\n":
+                            errors.append(f"Invalid PNG header: {fpng}")
+                for lyr in data.get("layers", []):
+                    lid = lyr["name"]
+                    lpng = os.path.join(sdir, "layers", fid, f"{lid}.png")
+                    if not os.path.isfile(lpng):
+                        errors.append(f"Missing sprite layer PNG: {lpng}")
+        elif rtype == "GMScript":
+            gml = os.path.join(os.path.dirname(full), f"{data['name']}.gml")
+            if not os.path.isfile(gml):
+                errors.append(f"Missing script GML: {gml}")
+        elif rtype == "GMObject":
+            odir = os.path.dirname(full)
+            ev_prefix = {0: "Create", 3: "Step", 8: "Draw", 12: "CleanUp"}
+            for ev in data.get("eventList", []):
+                pref = ev_prefix.get(ev["eventType"])
+                if pref:
+                    egml = os.path.join(odir, f"{pref}_{ev['eventNum']}.gml")
+                    if not os.path.isfile(egml):
+                        errors.append(f"Missing object event GML: {egml}")
+        elif rtype == "GMRoom":
+            if len(data.get("views", [])) != 8:
+                errors.append(f"Room {data['name']} has {len(data.get('views', []))} views (expected 8)")
+
+    # Check folders
+    for fld in yyp.get("Folders", []):
+        fp = os.path.join(GM_DIR, fld["folderPath"].replace("/", os.sep))
+        if not os.path.isfile(fp):
+            errors.append(f"Missing folder .yy: {fld['folderPath']}")
+
+    # Check IncludedFiles
+    for inc in yyp.get("IncludedFiles", []):
+        ip = os.path.join(GM_DIR, inc["filePath"].replace("/", os.sep), inc["name"])
+        if not os.path.isfile(ip):
+            errors.append(f"Missing IncludedFile: {ip}")
+
+    # Check RoomOrderNodes
+    for rn in yyp.get("RoomOrderNodes", []):
+        rp = os.path.join(GM_DIR, rn["roomId"]["path"].replace("/", os.sep))
+        if not os.path.isfile(rp):
+            errors.append(f"Missing RoomOrderNode: {rn['roomId']['path']}")
+
+    # Check options
+    for opt in ("options/main/options_main.yy", "options/windows/options_windows.yy"):
+        op = os.path.join(GM_DIR, opt.replace("/", os.sep))
+        if not os.path.isfile(op):
+            errors.append(f"Missing option file: {opt}")
+        else:
+            with open(op, "r", encoding="utf-8") as of:
+                json.load(of)
+
+    if errors:
+        raise RuntimeError("GameMaker project audit FAILED:\n  - " + "\n  - ".join(errors))
+    print(f"[AUDIT PASSED] {len(yyp['resources'])} resources, {len(yyp['IncludedFiles'])} IncludedFiles, 8 room views, all JSON & PNG verified.")
+
+
+HOW_TO_OPEN_RU = """============================================================
+  BEBECHAD: ОДИН ДОМА — ПЕРЕНОС В GAMEMAKER (LTS 2026 / 2024+)
+============================================================
+
+СПОСОБ 1 (САМЫЙ БЫСТРЫЙ — через файл BebechadHomeAlone.yyz):
+  1. Перенеси файл BebechadHomeAlone.yyz на другой компьютер.
+  2. Открой GameMaker (2024+ / LTS 2026).
+  3. Нажми File -> Import (Файл -> Импорт) и выбери BebechadHomeAlone.yyz.
+  4. Выбери папку, куда распаковать проект -> нажми F5 (Run)!
+
+СПОСОБ 2 (Через этот архив BebechadHomeAlone_GameMaker_Portable.zip):
+  1. Распакуй папку BebechadHomeAlone в любую папку без спецсимволов
+     (например, C:\\Games\\BebechadHomeAlone).
+  2. Открой GameMaker -> Open -> выбери BebechadHomeAlone\\BebechadHomeAlone.yyp
+     (или просто дважды кликни по BebechadHomeAlone.yyp).
+  3. Нажми F5 (Run) для запуска игры!
+
+ЧТО УЖЕ ВШИТО В ПРОЕКТ (ничего докачивать не нужно):
+  - Все спрайты и портреты Bebechad / Catttt / Rat1 / тайлы окружения
+  - Встроенный кириллический шрифт ui_font.ttf (LiberationSans-Bold, SIL OFL)
+    в папке datafiles/ — русский текст работает сразу на любом ПК!
+  - Фиксированный GUI 1280x720 (одинаково красиво на любом мониторе)
+  - 4 комнаты дома (Гостиная, Кухня, Подвал, Задний Двор)
+  - 3 уникальных Крысиных Босса + босс-мини-игры (тайминг-бар + QTE)
+  - Магазин Кошачьей Мяты и уютный интерфейс в стиле Stardew (вариант #3)
+
+УПРАВЛЕНИЕ В ИГРЕ:
+  WASD / Стрелки   — движение кота Bebechad (авто-атаки срабатывают сами)
+  Shift            — рывок (Pounce Dash)
+  F                — Ульта Гигачада (когда шкала 100%)
+  B / Tab / E      — Магазин Кошачьей Мяты (E рядом с миской в гостиной)
+  1–8              — быстрая покупка улучшений в магазине
+  Пробел / ЛКМ     — пролистать диалог / попасть в зелёную зону мини-игры
+  T                — мгновенно призвать Крысиного Босса (для теста)
+"""
+
+
+def build_transfer_packages():
+    os.makedirs(EXPORT_DIR, exist_ok=True)
+    yyz_path = os.path.join(EXPORT_DIR, "BebechadHomeAlone.yyz")
+    zip_path = os.path.join(EXPORT_DIR, "BebechadHomeAlone_GameMaker_Portable.zip")
+
+    # 1) Native GameMaker .yyz archive (files directly at archive root!)
+    with zipfile.ZipFile(yyz_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+        for dirpath, dirnames, filenames in os.walk(GM_DIR):
+            dirnames.sort()
+            for fname in sorted(filenames):
+                full = os.path.join(dirpath, fname)
+                arcname = os.path.relpath(full, GM_DIR).replace(os.sep, "/")
+                zf.write(full, arcname)
+
+    # 2) Portable ZIP with BebechadHomeAlone/ folder + Russian instructions
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
+        zf.writestr("КАК_ОТКРЫТЬ.txt", HOW_TO_OPEN_RU.encode("utf-8"))
+        for dirpath, dirnames, filenames in os.walk(GM_DIR):
+            dirnames.sort()
+            for fname in sorted(filenames):
+                full = os.path.join(dirpath, fname)
+                rel = os.path.relpath(full, GM_DIR).replace(os.sep, "/")
+                zf.write(full, f"BebechadHomeAlone/{rel}")
+
+    print(f"[EXPORT READY] {yyz_path} ({os.path.getsize(yyz_path) / 1024:.1f} KB)")
+    print(f"[EXPORT READY] {zip_path} ({os.path.getsize(zip_path) / 1024:.1f} KB)")
 
 
 if __name__ == "__main__":
