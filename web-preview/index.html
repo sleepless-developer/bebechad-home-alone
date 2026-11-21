@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Bebechad: Один Дома — GameMaker LTS 2026 Web Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #16131f; color: #f4f1ea; font-family: system-ui, -apple-system, sans-serif; }
+  canvas { display: block; width: 100vw; height: 100vh; image-rendering: pixelated; }
+
+  /* Top HUD */
+  #topHud {
+    position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 12;
+    display: flex; flex-direction: column; align-items: center; gap: 5px; pointer-events: none;
+  }
+  #statsRow {
+    display: flex; gap: 12px; align-items: center; padding: 6px 14px;
+    background: #1a1526eb; border: 2px solid #f5c652; border-radius: 3px;
+    box-shadow: inset 0 0 0 2px #36293d, 0 5px 16px #000a;
+    font: 800 12px monospace;
+  }
+  #statsRow span { color: #fae04b; }
+  #statsRow .nip { color: #7ef29d; }
+  #statsRow .room { color: #7fd4ff; }
+
+  #bossBar {
+    display: none; width: 460px; height: 22px; position: relative;
+    background: #23111c; border: 2px solid #ff586e; border-radius: 3px;
+    box-shadow: 0 4px 14px #000b; overflow: hidden;
+  }
+  #bossFill { height: 100%; width: 100%; background: linear-gradient(90deg, #b81d38, #ff586e); transition: width 0.08s; }
+  #bossTxt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 800 11px monospace; text-shadow: 0 1px 2px #000; }
+
+  /* Left Control Panel */
+  #sidePanel {
+    position: fixed; top: 68px; left: 10px; z-index: 12; width: 228px;
+    background: #1a1526e8; border: 2px solid #f5c652; border-radius: 3px;
+    box-shadow: inset 0 0 0 2px #36293d, 0 6px 18px #000a;
+    padding: 9px 11px; font-size: 11.5px;
+  }
+  #sidePanel b { color: #fae04b; display: block; font-size: 13px; margin-bottom: 5px; }
+  #sidePanel .hint { color: #c7cedb; line-height: 1.5; margin-bottom: 8px; }
+  kbd { background: #312842; border: 1px solid #594b72; border-radius: 2px; padding: 0 4px; font: 800 10px monospace; color: #fff; }
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .btn-grid button {
+    background: #2c243a; color: #f5c652; border: 1.5px solid #f5c65299; border-radius: 3px;
+    padding: 5px 6px; font: 800 11px system-ui; cursor: pointer;
+  }
+  .btn-grid button:hover { background: #3d3252; }
+  .btn-grid button.green { color: #7ef29d; border-color: #46d67a99; }
+  .btn-grid button.red { color: #ff8c9b; border-color: #ff586e99; }
+
+  /* Bottom Vitals & Skills */
+  #bottomHud {
+    position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 12;
+    display: flex; align-items: center; gap: 8px;
+    background: #1a1526ee; border: 2px solid #f5c652; border-radius: 3px;
+    box-shadow: inset 0 0 0 2px #36293d, 0 6px 20px #000c; padding: 6px 10px;
+  }
+  .bar { width: 170px; height: 22px; background: #261620; border: 2px solid #120e1a; position: relative; border-radius: 2px; overflow: hidden; }
+  #hpFill { height: 100%; width: 100%; background: linear-gradient(90deg, #c92642, #ff6378); }
+  .bar-txt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 800 11px monospace; text-shadow: 0 1px 2px #000; }
+  .pill {
+    width: 118px; height: 22px; background: #241e32; border: 2px solid #120e1a; border-radius: 2px;
+    position: relative; overflow: hidden; cursor: pointer;
+  }
+  #dashFill { height: 100%; width: 100%; background: linear-gradient(90deg, #b88424, #fae04b); }
+  #ultFill { height: 100%; width: 100%; background: linear-gradient(90deg, #2ca35a, #7ef29d); }
+  .pill.ready { box-shadow: 0 0 8px #7ef29d88; }
+
+  /* Dialogue / Monologue Box (bebechad / catttt / rat1 portraits!) */
+  #dialogueBox {
+    display: none; position: fixed; bottom: 58px; left: 50%; transform: translateX(-50%);
+    z-index: 28; width: min(720px, 92vw);
+    background: #191326f7; border: 3px solid #f5c652; border-radius: 4px;
+    box-shadow: inset 0 0 0 2px #3a2d4a, 0 12px 34px #000d;
+    padding: 12px 14px; align-items: center; gap: 14px; cursor: pointer;
+  }
+  #dialogueBox.show { display: flex; }
+  #dlgPortraitWrap {
+    width: 116px; height: 116px; flex-shrink: 0; background: #251e34;
+    border: 2px solid #f5c652; border-radius: 3px; display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  #dlgPortrait { width: 112px; height: 112px; image-rendering: pixelated; }
+  #dlgSpeaker { font: 900 14px monospace; color: #fae04b; letter-spacing: .5px; margin-bottom: 6px; text-transform: uppercase; }
+  #dlgText { font-size: 15px; line-height: 1.45; color: #f6f3ee; min-height: 44px; }
+  #dlgHint { margin-top: 8px; font: 700 11px monospace; color: #9ea6bc; text-align: right; }
+
+  /* Boss Timing Bar + QTE Combo Mini-Game Overlay */
+  #minigameBox {
+    display: none; position: fixed; bottom: 66px; left: 50%; transform: translateX(-50%);
+    z-index: 29; width: min(650px, 94vw);
+    background: #181224fa; border: 3px solid #ff586e; border-radius: 4px;
+    box-shadow: inset 0 0 0 2px #472034, 0 14px 40px #000e;
+    padding: 12px 16px;
+  }
+  #minigameBox.show { display: block; }
+  .mg-row { display: flex; align-items: center; gap: 14px; }
+  .mg-port { width: 92px; height: 92px; image-rendering: pixelated; background: #261d34; border: 2px solid #f5c652; border-radius: 3px; flex-shrink: 0; }
+  .mg-center { flex: 1; text-align: center; }
+  .mg-title { font: 900 14px monospace; color: #fae04b; margin-bottom: 6px; letter-spacing: .4px; }
+  .mg-sub { font: 800 12px monospace; color: #d8deea; margin-bottom: 10px; }
+  #timingBar {
+    position: relative; height: 28px; background: #361e2c; border: 2px solid #120d18; border-radius: 3px; overflow: hidden; margin: 0 auto 8px;
+  }
+  #timingGreen { position: absolute; top: 0; bottom: 0; left: 36%; width: 28%; background: #42cc76; }
+  #timingGold { position: absolute; top: 0; bottom: 0; left: 45%; width: 10%; background: #fae04b; }
+  #timingCursor { position: absolute; top: -2px; bottom: -2px; width: 6px; margin-left: -3px; background: #ffffff; box-shadow: 0 0 8px #fff; left: 5%; }
+  #qteRow { display: none; justify-content: center; gap: 10px; margin: 6px 0 10px; }
+  .qte-key {
+    width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+    background: #2f2842; border: 2px solid #635782; border-radius: 4px;
+    font: 900 18px monospace; color: #c7cedb;
+  }
+  .qte-key.active { background: #fae04b; border-color: #fff; color: #161220; transform: scale(1.12); box-shadow: 0 0 12px #fae04b99; }
+  .qte-key.done { background: #42cc76; border-color: #9effc2; color: #0f2416; }
+  #mgFuseWrap { height: 7px; background: #2b1824; border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  #mgFuse { height: 100%; width: 100%; background: linear-gradient(90deg, #ff586e, #fae04b); }
+
+  /* Catnip Upgrade Shop Modal */
+  #shopModal {
+    display: none; position: fixed; inset: 0; z-index: 25; background: #0c0914cc;
+    align-items: center; justify-content: center;
+  }
+  #shopModal.show { display: flex; }
+  .shop-box {
+    width: min(760px, 94vw); background: #1a1426; border: 3px solid #46d67a; border-radius: 4px;
+    box-shadow: inset 0 0 0 2px #2c4a39, 0 18px 46px #000d; padding: 16px 18px;
+  }
+  .shop-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .shop-head h2 { font-size: 18px; color: #7ef29d; }
+  .shop-head .bal { font: 900 15px monospace; color: #fae04b; }
+  .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .up-card {
+    background: #241e33; border: 2px solid #453c5c; border-radius: 3px; padding: 9px 11px;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px; cursor: pointer;
+    transition: transform .08s, border-color .1s;
+  }
+  .up-card.afford { border-color: #46d67a; }
+  .up-card.afford:hover { transform: translateY(-2px); background: #2d2640; }
+  .up-card.maxed { opacity: .55; border-color: #f5c652; cursor: default; }
+  .up-name { font-weight: 800; font-size: 13px; color: #fff; }
+  .up-desc { font-size: 11px; color: #c4ccdc; margin-top: 2px; }
+  .up-price { font: 900 12px monospace; color: #7ef29d; white-space: nowrap; text-align: right; }
+  .shop-foot { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; font: 700 12px monospace; color: #aeb6ca; }
+  .shop-foot button {
+    background: #46d67a; color: #122419; border: 2px solid #122419; border-radius: 3px;
+    padding: 6px 16px; font-weight: 900; cursor: pointer;
+  }
+  .theme-bar { margin-top: 7px; padding-top: 7px; border-top: 1px dashed #4a3f63; display: flex; flex-direction: column; gap: 5px; }
+  .theme-bar select { width: 100%; background: #261f36; color: #fff; border: 1.5px solid #f5c65299; border-radius: 3px; padding: 4px 5px; font: 700 11px system-ui; }
+  .theme-bar a { display: block; text-align: center; background: #3b2d54; color: #fae04b; border: 1.5px solid #f5c652; border-radius: 3px; padding: 4px 6px; text-decoration: none; font: 800 11px system-ui; }
+  .theme-bar a:hover { background: #4d3b6e; }
+
+  /* ==================== LIVE 10 UI & DIALOGUE THEMES ==================== */
+  /* 1. Картонная коробка / Скрапбук */
+  body.theme-1 #statsRow, body.theme-1 #sidePanel, body.theme-1 #bottomHud { background: #dfbf94f2; color: #3b2616; border: 2px dashed #7a5230; box-shadow: 3px 4px 0 rgba(30,18,8,0.45); }
+  body.theme-1 #statsRow span, body.theme-1 #sidePanel b { color: #8c2e1c; }
+  body.theme-1 #sidePanel .hint { color: #4f351e; }
+  body.theme-1 #dialogueBox, body.theme-1 #minigameBox, body.theme-1 .shop-box { background: #e8cda4fa; color: #2e1d10; border: 3px solid #754c29; box-shadow: 5px 6px 0 rgba(25,14,6,0.5); }
+  body.theme-1 #dlgPortraitWrap, body.theme-1 .mg-port { background: #fffaf0; border: 4px solid #fff; box-shadow: 2px 3px 0 rgba(0,0,0,0.3); transform: rotate(-2deg); }
+  body.theme-1 #dlgSpeaker, body.theme-1 .mg-title, body.theme-1 .shop-head h2 { color: #9c301e; }
+  body.theme-1 #dlgText, body.theme-1 .mg-sub { color: #2b1b0f; }
+  body.theme-1 .up-card { background: #f2dec0; border-color: #9e7348; } body.theme-1 .up-name { color: #2b1b0f; } body.theme-1 .up-desc { color: #593e24; }
+
+  /* 2. Комикс / Поп-арт (Persona / Scott Pilgrim) */
+  body.theme-2 #statsRow, body.theme-2 #bottomHud { background: #ffde2e; color: #111; border: 3px solid #111; transform: translateX(-50%) skewX(-7deg); box-shadow: 5px 5px 0 #111; }
+  body.theme-2 #statsRow span, body.theme-2 #statsRow .nip, body.theme-2 #statsRow .room { color: #c41236; }
+  body.theme-2 #sidePanel { background: #fff; color: #111; border: 3px solid #111; box-shadow: 5px 5px 0 #ff2e55, 8px 8px 0 #111; }
+  body.theme-2 #sidePanel b { color: #ff2e55; } body.theme-2 #sidePanel .hint { color: #222; }
+  body.theme-2 #dialogueBox, body.theme-2 #minigameBox, body.theme-2 .shop-box { background: #fff; color: #111; border: 4px solid #111; box-shadow: 8px 8px 0 #ff2e55, 12px 12px 0 #111; background-image: radial-gradient(#e6e6e6 1px, transparent 1px); background-size: 6px 6px; }
+  body.theme-2 #dlgPortraitWrap, body.theme-2 .mg-port { background: #ffde2e; border: 3px solid #111; box-shadow: 4px 4px 0 #111; margin-top: -28px; }
+  body.theme-2 #dlgSpeaker, body.theme-2 .mg-title { display: inline-block; background: #111; color: #ffde2e; padding: 2px 9px; font-style: italic; }
+  body.theme-2 #dlgText, body.theme-2 .mg-sub { color: #111; font-weight: 700; }
+  body.theme-2 .up-card { background: #fff8d6; border: 3px solid #111; box-shadow: 3px 3px 0 #111; } body.theme-2 .up-name { color: #111; } body.theme-2 .up-desc { color: #333; } body.theme-2 .shop-head h2 { color: #111; }
+
+  /* 3. Уютный Пиксель-Дерево (Stardew Valley — ОСНОВНОЙ СТИЛЬ!) */
+  body.theme-3 #statsRow, body.theme-3 #sidePanel, body.theme-3 #bottomHud, body.theme-3 #dialogueBox, body.theme-3 #minigameBox, body.theme-3 .shop-box {
+    background: linear-gradient(180deg, #faf0d7, #f2d9ad); color: #3d2311;
+    border: 4px solid #75401b; border-radius: 3px;
+    box-shadow: inset 0 0 0 3px #d9a259, inset 0 0 0 5px #fff5dc, 0 5px 0 #3d210d, 0 10px 24px #0009;
+  }
+  body.theme-3 #statsRow span { color: #8c2d19; }
+  body.theme-3 #statsRow .nip { color: #1f7337; }
+  body.theme-3 #statsRow .room { color: #245c8a; }
+  body.theme-3 #sidePanel b { color: #8c2d19; border-bottom: 2px solid #d9a259; padding-bottom: 4px; margin-bottom: 6px; }
+  body.theme-3 #sidePanel .hint { color: #4f2f17; }
+  body.theme-3 kbd { background: #e6c690; color: #3d2311; border: 1.5px solid #8a5024; box-shadow: 0 1px 0 #5c3214; }
+  body.theme-3 .btn-grid button, body.theme-3 .theme-bar a {
+    background: linear-gradient(180deg, #f2cf8d, #d9a259); color: #3b200d;
+    border: 2px solid #6e3b17; box-shadow: inset 0 1px 0 #fff1cc, 0 2px 0 #4d280f;
+  }
+  body.theme-3 .btn-grid button:hover, body.theme-3 .theme-bar a:hover { background: linear-gradient(180deg, #fae0a8, #e6b46b); }
+  body.theme-3 .btn-grid button.green { background: linear-gradient(180deg, #a6e39d, #68ba64); color: #163315; border-color: #2f6b2c; }
+  body.theme-3 .btn-grid button.red { background: linear-gradient(180deg, #f09c95, #d45d55); color: #3d1111; border-color: #7d241f; }
+  body.theme-3 .theme-bar { border-top-color: #c99451; }
+  body.theme-3 .theme-bar select { background: #fff4d9; color: #3d2311; border: 2px solid #7d4721; }
+  body.theme-3 .bar, body.theme-3 .pill { background: #5e3418; border: 2px solid #3d210d; box-shadow: inset 0 2px 3px #0006; }
+  body.theme-3 #bossBar { background: #542018; border: 3px solid #75401b; box-shadow: inset 0 0 0 2px #d9a259, 0 4px 12px #0009; }
+  body.theme-3 #dlgPortraitWrap, body.theme-3 .mg-port {
+    background: radial-gradient(circle, #fff3d6 25%, #e3be84 100%);
+    border: 3px solid #75401b; box-shadow: inset 0 0 0 2px #fff7e2, 0 2px 0 #4a260d;
+  }
+  body.theme-3 #dlgSpeaker { color: #8c2d19; border-bottom: 2px solid #d4a05b; padding-bottom: 3px; }
+  body.theme-3 #dlgText { color: #3b2210; font-weight: 600; }
+  body.theme-3 #dlgHint { color: #7a5230; }
+  body.theme-3 .mg-title { color: #8c2d19; }
+  body.theme-3 .mg-sub { color: #472a15; }
+  body.theme-3 #timingBar { background: #5c3318; border: 3px solid #3d210d; }
+  body.theme-3 .qte-key { background: #e8c78e; border: 2px solid #75401b; color: #3d2311; box-shadow: 0 2px 0 #4d280f; }
+  body.theme-3 .qte-key.active { background: #ffe052; border-color: #75401b; color: #2b1608; }
+  body.theme-3 .qte-key.done { background: #6cc968; border-color: #276325; color: #102b0f; }
+  body.theme-3 #mgFuseWrap { background: #6b3d1e; border: 1.5px solid #3d210d; }
+  body.theme-3 .shop-head h2 { color: #8c2d19; }
+  body.theme-3 .shop-head .bal { color: #1f7337; }
+  body.theme-3 .up-card { background: #f2dab0; border: 2px solid #965c2c; box-shadow: inset 0 1px 0 #fff3d6, 0 2px 0 #6b3e1b; }
+  body.theme-3 .up-card.afford { border-color: #2f8545; background: #f7e9c6; }
+  body.theme-3 .up-card.afford:hover { background: #fff3d4; }
+  body.theme-3 .up-name { color: #3d2311; }
+  body.theme-3 .up-desc { color: #5e3b20; }
+  body.theme-3 .up-price { color: #1f7337; }
+  body.theme-3 .shop-foot { color: #6e4524; }
+  body.theme-3 .shop-foot button { background: linear-gradient(180deg, #8ee084, #4ca84a); color: #102b0f; border: 2px solid #225420; box-shadow: 0 2px 0 #183d16; }
+
+  /* 4. Классика Undertale / Deltarune */
+  body.theme-4 #statsRow, body.theme-4 #sidePanel, body.theme-4 #bottomHud, body.theme-4 #dialogueBox, body.theme-4 #minigameBox, body.theme-4 .shop-box {
+    background: #000; color: #fff; border: 4px solid #fff; border-radius: 0; box-shadow: none; font-family: monospace;
+  }
+  body.theme-4 #dlgPortraitWrap, body.theme-4 .mg-port { background: #000; border: 3px solid #fff; border-radius: 0; }
+  body.theme-4 #dlgSpeaker, body.theme-4 #statsRow span, body.theme-4 #sidePanel b { color: #ff0; }
+  body.theme-4 .up-card { background: #000; border: 2px solid #fff; border-radius: 0; } body.theme-4 .up-card.afford { border-color: #ff0; }
+
+  /* 5. Неон-VHS / Katana ZERO */
+  body.theme-5 #statsRow, body.theme-5 #sidePanel, body.theme-5 #bottomHud {
+    background: rgba(12, 8, 28, 0.94); color: #6ef2ff; border: 2px solid #ff2ec4; box-shadow: 0 0 14px rgba(255,46,196,0.45);
+  }
+  body.theme-5 #dialogueBox, body.theme-5 #minigameBox, body.theme-5 .shop-box {
+    background: repeating-linear-gradient(0deg, rgba(16,10,36,0.96) 0 2px, rgba(26,15,56,0.96) 2px 4px);
+    color: #e8fcff; border: 2px solid #6ef2ff; box-shadow: 0 0 20px rgba(110,242,255,0.4), inset 0 0 16px rgba(255,46,196,0.22); font-family: monospace;
+  }
+  body.theme-5 #dlgPortraitWrap, body.theme-5 .mg-port { background: #0c071c; border: 2px solid #ff2ec4; box-shadow: 2px 0 0 #6ef2ff, -2px 0 0 #ff2ec4; }
+  body.theme-5 #dlgSpeaker, body.theme-5 .mg-title { color: #ff5ce1; }
+
+  /* 6. Game Boy Color / Ретро-Картридж */
+  body.theme-6 #statsRow, body.theme-6 #sidePanel, body.theme-6 #bottomHud, body.theme-6 #dialogueBox, body.theme-6 #minigameBox, body.theme-6 .shop-box {
+    background: #e4f2be; color: #14291a; border: 4px solid #14291a; border-radius: 0; box-shadow: inset 0 0 0 3px #8ec06c; font-family: monospace;
+  }
+  body.theme-6 #statsRow span, body.theme-6 #sidePanel b, body.theme-6 #dlgSpeaker, body.theme-6 .shop-head h2 { color: #14291a; background: #98cc6e; padding: 0 5px; }
+  body.theme-6 #sidePanel .hint, body.theme-6 #dlgText, body.theme-6 .mg-sub { color: #1b3622; }
+  body.theme-6 #dlgPortraitWrap, body.theme-6 .mg-port { background: #c2db88; border: 3px solid #14291a; }
+  body.theme-6 .up-card { background: #cde398; border: 2px solid #14291a; } body.theme-6 .up-name, body.theme-6 .up-desc, body.theme-6 .up-price { color: #14291a; }
+
+  /* 7. Холодильник с Магнитами и Стикерами */
+  body.theme-7 #statsRow, body.theme-7 #sidePanel, body.theme-7 #bottomHud, body.theme-7 .shop-box {
+    background: #f4f8fb; color: #243342; border: 2px solid #b5c6d4; border-radius: 8px; box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  }
+  body.theme-7 #statsRow span, body.theme-7 #sidePanel b, body.theme-7 .shop-head h2 { color: #d63c52; }
+  body.theme-7 #sidePanel .hint { color: #43576b; }
+  body.theme-7 #dialogueBox, body.theme-7 #minigameBox {
+    background: #fff59d; color: #2b2416; border: 2px solid #e0ca53; border-radius: 3px; box-shadow: 5px 7px 16px rgba(0,0,0,0.4);
+  }
+  body.theme-7 #dlgPortraitWrap, body.theme-7 .mg-port { background: #fff; border: 4px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+  body.theme-7 #dlgSpeaker, body.theme-7 .mg-title { color: #b83244; }
+  body.theme-7 #dlgText, body.theme-7 .mg-sub { color: #2b2416; }
+  body.theme-7 .up-card { background: #fff8c4; border-color: #d9c55b; } body.theme-7 .up-name { color: #243342; } body.theme-7 .up-desc { color: #4d5f70; } body.theme-7 .up-price { color: #1f7d42; }
+
+  /* 8. Кошачья Газета "The Daily Meow" */
+  body.theme-8 #statsRow, body.theme-8 #sidePanel, body.theme-8 #bottomHud, body.theme-8 #dialogueBox, body.theme-8 #minigameBox, body.theme-8 .shop-box {
+    background: #efe7d4; color: #1b1814; border: 4px double #1b1814; border-radius: 0; box-shadow: 4px 5px 0 rgba(0,0,0,0.45); font-family: Georgia, serif;
+  }
+  body.theme-8 #statsRow span, body.theme-8 #sidePanel b, body.theme-8 #dlgSpeaker, body.theme-8 .mg-title, body.theme-8 .shop-head h2 { color: #9e2226; }
+  body.theme-8 #sidePanel .hint, body.theme-8 #dlgText, body.theme-8 .mg-sub { color: #29241e; }
+  body.theme-8 #dlgPortraitWrap, body.theme-8 .mg-port { background: #d8ceba; border: 2px solid #1b1814; }
+  body.theme-8 .up-card { background: #e3d9c3; border: 2px solid #1b1814; } body.theme-8 .up-name, body.theme-8 .up-desc { color: #1b1814; } body.theme-8 .up-price { color: #9e2226; }
+
+  /* 9. Мятно-Ботанический (Modern Indie) */
+  body.theme-9 #statsRow, body.theme-9 #sidePanel, body.theme-9 #bottomHud, body.theme-9 #dialogueBox, body.theme-9 #minigameBox, body.theme-9 .shop-box {
+    background: rgba(16, 36, 27, 0.96); color: #e8faf0; border: 2px solid #69e098; border-radius: 10px; box-shadow: inset 0 0 0 2px #26543e, 0 10px 26px #000a;
+  }
+  body.theme-9 #dlgPortraitWrap, body.theme-9 .mg-port { background: #0f241b; border: 2px solid #9ef5be; border-radius: 8px; }
+  body.theme-9 #dlgSpeaker, body.theme-9 #sidePanel b, body.theme-9 .mg-title { color: #8af5b2; }
+  body.theme-9 .up-card { background: #173326; border-color: #367354; border-radius: 6px; }
+
+  /* 10. Аркадный Битэмап 90-х (Metal Slug / Streets of Rage) */
+  body.theme-10 #statsRow, body.theme-10 #sidePanel, body.theme-10 #bottomHud {
+    background: linear-gradient(180deg, #424f70, #1e2438); color: #fff; border: 2px solid #9cb4e8; box-shadow: inset 0 2px 0 #7086b8, 0 4px 0 #0f1320;
+  }
+  body.theme-10 #dialogueBox, body.theme-10 #minigameBox, body.theme-10 .shop-box {
+    background: linear-gradient(180deg, #273766, #141c38); color: #fff; border: 3px solid #ffba24; box-shadow: inset 0 0 0 2px #6b88d6, 0 6px 0 #0b1020; font-family: monospace;
+  }
+  body.theme-10 #dlgPortraitWrap, body.theme-10 .mg-port { background: linear-gradient(180deg, #ffba24, #d95626); border: 2px solid #fff; }
+  body.theme-10 #dlgSpeaker, body.theme-10 .mg-title { color: #ffe042; text-shadow: 2px 2px 0 #991a2e; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="topHud">
+  <div id="statsRow">
+    <div>КОТ: <span id="heroName">Bebechad</span></div>
+    <div>МЯТА: <span class="nip" id="nipTxt">10</span></div>
+    <div>ВОЛНА: <span id="waveTxt">1</span></div>
+    <div>УБИТО: <span id="killsTxt">0</span></div>
+    <div>КОМНАТА: <span class="room" id="roomTxt">Гостиная</span></div>
+    <div>ВРЕМЯ: <span id="timeTxt">0:00</span></div>
+  </div>
+  <div id="bossBar"><div id="bossFill"></div><div id="bossTxt">КРЫСИНЫЙ БОСС</div></div>
+</div>
+
+<div id="sidePanel">
+  <b>Bebechad: Один Дома</b>
+  <div class="hint">
+    <kbd>WASD</kbd> — бегать по 4 комнатам<br>
+    <kbd>Shift</kbd> — кошачий рывок<br>
+    <kbd>F</kbd> — ульта Гигачад-Мяу<br>
+    <kbd>B</kbd> / <kbd>E</kbd> у миски — Магазин Мяты<br>
+    <kbd>T</kbd> — призвать Крысу-Босса<br>
+    <kbd>M</kbd> — тест мини-игры босса
+  </div>
+  <div class="btn-grid">
+    <button class="green" id="shopBtn">Мята (B)</button>
+    <button class="red" id="bossBtn">Босс (T)</button>
+    <button id="mgBtn">Мини-игра (M)</button>
+    <button id="dlgBtn">Монолог</button>
+  </div>
+  <div class="theme-bar">
+    <select id="themeSelect" title="Выбор стиля интерфейса">
+      <option value="0">Стиль UI: 0. Базовый</option>
+      <option value="1">1. Картонная коробка</option>
+      <option value="2">2. Комикс / Поп-арт</option>
+      <option value="3">3. Пиксель-дерево (Stardew)</option>
+      <option value="4">4. Undertale / Deltarune</option>
+      <option value="5">5. Неон-VHS / Katana ZERO</option>
+      <option value="6">6. Game Boy Color</option>
+      <option value="7">7. Холодильник и стикеры</option>
+      <option value="8">8. Газета «The Daily Meow»</option>
+      <option value="9">9. Мятно-ботанический</option>
+      <option value="10">10. Аркадный битэмап 90-х</option>
+    </select>
+    <a href="./ui-themes.html">🎨 Галерея всех 10 стилей</a>
+  </div>
+</div>
+
+<div id="bottomHud">
+  <div class="bar"><div id="hpFill"></div><div class="bar-txt" id="hpTxt">100 / 100 HP</div></div>
+  <div class="pill" id="dashPill"><div id="dashFill"></div><div class="bar-txt" id="dashTxt">[Shift] РЫВОК</div></div>
+  <div class="pill" id="ultPill"><div id="ultFill"></div><div class="bar-txt" id="ultTxt">[F] ГИГАЧАД</div></div>
+</div>
+
+<div id="dialogueBox">
+  <div id="dlgPortraitWrap"><img id="dlgPortrait" alt="portrait"></div>
+  <div style="flex:1">
+    <div id="dlgSpeaker">BEBECHAD</div>
+    <div id="dlgText"></div>
+    <div id="dlgHint">[Пробел / Клик] продолжить</div>
+  </div>
+</div>
+
+<div id="minigameBox">
+  <div class="mg-row">
+    <img class="mg-port" id="mgLeftPort" src="./assets/spr_portrait_bebechad.png" alt="Bebechad">
+    <div class="mg-center">
+      <div class="mg-title" id="mgTitle">БОСС-МИНИ-ИГРА: ПРОБИТИЕ СЫРНОГО ЩИТА!</div>
+      <div class="mg-sub" id="mgSub">Этап 1: Нажми [ПРОБЕЛ] или Клик в зелёной зоне!</div>
+      <div id="timingBar">
+        <div id="timingGreen"></div>
+        <div id="timingGold"></div>
+        <div id="timingCursor"></div>
+      </div>
+      <div id="qteRow"></div>
+      <div id="mgFuseWrap"><div id="mgFuse"></div></div>
+    </div>
+    <img class="mg-port" id="mgRightPort" src="./assets/spr_portrait_rat.png" alt="Rat Boss">
+  </div>
+</div>
+
+<div id="shopModal">
+  <div class="shop-box">
+    <div class="shop-head">
+      <h2>🌿 Магазин Кошачьей Мяты</h2>
+      <div class="bal">Баланс: <span id="shopBal">20</span> мяты</div>
+    </div>
+    <div class="shop-grid" id="shopGrid"></div>
+    <div class="shop-foot">
+      <span>Нажми [1–8] или кликни карточку для покупки</span>
+      <button id="closeShopBtn">В бой [B / Esc]</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const cv = $('c'), ctx = cv.getContext('2d');
+
+// ====================================================== LOAD EXACT USER SPRITES & TILES
+const ASSET_FILES = {
+  bebechad_top: './assets/spr_bebechad_top.png',
+  portrait_bebechad: './assets/spr_portrait_bebechad.png',
+  portrait_cat_angry: './assets/spr_portrait_cat_angry.png',
+  portrait_rat: './assets/spr_portrait_rat.png',
+  tile_grass_dark: './assets/tile_grass_dark.png',
+  tile_grass_overlay: './assets/tile_grass_overlay.png',
+  tile_brick_moss: './assets/tile_brick_moss.png',
+  mouse_top: './assets/spr_mouse_top.png?v=3',
+  rat_boss_top: './assets/spr_rat_boss_top.png?v=2',
+  catnip: './assets/spr_catnip.png',
+};
+const IMGS = {};
+let assetsLoaded = 0;
+const totalAssets = Object.keys(ASSET_FILES).length;
+for (const [k, url] of Object.entries(ASSET_FILES)) {
+  const im = new Image();
+  im.onload = () => { IMGS[k] = im; if (++assetsLoaded === totalAssets) startGame(); };
+  im.src = url;
+}
+
+// ====================================================== 4-ROOM INTERCONNECTED HOUSE ("ОДИН ДОМА")
+const WORLD_W = 1920, WORLD_H = 1280, MID_X = 960, MID_Y = 640;
+const HOUSE_WALLS = [
+  { x1: 0,    y1: 0,    x2: 1920, y2: 48,   brick: true },
+  { x1: 0,    y1: 1232, x2: 1920, y2: 1280, brick: true },
+  { x1: 0,    y1: 0,    x2: 48,   y2: 1280, brick: true },
+  { x1: 1872, y1: 0,    x2: 1920, y2: 1280, brick: true },
+  // Vertical divider (Left: Гостиная/Подвал | Right: Кухня/Двор) with wide 160px doorways!
+  { x1: 936, y1: 48,   x2: 984, y2: 240,  brick: false },
+  { x1: 936, y1: 400,  x2: 984, y2: 880,  brick: true },
+  { x1: 936, y1: 1040, x2: 984, y2: 1232, brick: true },
+  // Horizontal divider (Top: Гостиная/Кухня | Bottom: Подвал/Двор) with wide 160px doorways!
+  { x1: 48,   y1: 616, x2: 400,  y2: 664, brick: true },
+  { x1: 560,  y1: 616, x2: 1360, y2: 664, brick: true },
+  { x1: 1520, y1: 616, x2: 1872, y2: 664, brick: true },
+];
+
+const HOUSE_PROPS = [
+  // Гостиная
+  { x1: 150,  y1: 96,   x2: 396,  y2: 184, kind: 'sofa',      label: 'Диван' },
+  { x1: 650,  y1: 96,   x2: 830,  y2: 162, kind: 'tv',        label: 'ТВ-тумба' },
+  { x1: 118,  y1: 430,  x2: 196,  y2: 508, kind: 'cat_tree',  label: 'Когтеточка' },
+  { x1: 780,  y1: 460,  x2: 882,  y2: 534, kind: 'bookshelf', label: 'Книги' },
+  { x1: 72,   y1: 72,   x2: 118,  y2: 118, kind: 'plant',     label: 'Монстера' },
+  { x1: 866,  y1: 72,   x2: 912,  y2: 118, kind: 'plant',     label: 'Фикус' },
+  // Кухня
+  { x1: 1050, y1: 62,   x2: 1320, y2: 128, kind: 'stove',     label: 'Плита и мойка' },
+  { x1: 1715, y1: 68,   x2: 1835, y2: 186, kind: 'fridge',    label: 'Холодильник' },
+  { x1: 1290, y1: 254,  x2: 1546, y2: 344, kind: 'island',    label: 'Остров с сыром' },
+  { x1: 1660, y1: 430,  x2: 1806, y2: 526, kind: 'dining',    label: 'Стол' },
+  // Подвал
+  { x1: 130,  y1: 790,  x2: 244,  y2: 892, kind: 'crates',    label: 'Ящики' },
+  { x1: 640,  y1: 970,  x2: 758,  y2: 1068,kind: 'barrels',   label: 'Бочки' },
+  { x1: 145,  y1: 1080, x2: 240,  y2: 1166,kind: 'crates',    label: 'Хлам' },
+  // Задний двор
+  { x1: 1140, y1: 790,  x2: 1266, y2: 896, kind: 'shed',      label: 'Сарайчик' },
+  { x1: 1580, y1: 990,  x2: 1766, y2: 1076,kind: 'planter',   label: 'Грядка Мяты' },
+];
+const CATNIP_BOWL = { x: 480, y: 196, r: 52 };
+const RAT_BURROWS = [
+  { x: 300, y: 668, side: 'top' },
+  { x: 760, y: 668, side: 'top' },
+  { x: 52,  y: 960, side: 'left' },
+];
+
+function getRoomName(x, y) {
+  if (x < MID_X && y < MID_Y) return 'Гостиная';
+  if (x >= MID_X && y < MID_Y) return 'Кухня';
+  if (x < MID_X && y >= MID_Y) return 'Подвал';
+  return 'Задний двор';
+}
+
+function resolveHouseCollision(ent, rad) {
+  for (const list of [HOUSE_WALLS, HOUSE_PROPS]) {
+    for (const r of list) {
+      const cx = Math.max(r.x1, Math.min(r.x2, ent.x));
+      const cy = Math.max(r.y1, Math.min(r.y2, ent.y));
+      const dx = ent.x - cx, dy = ent.y - cy;
+      const d = Math.hypot(dx, dy);
+      if (d < rad) {
+        if (d > 0.001) { ent.x = cx + (dx / d) * rad; ent.y = cy + (dy / d) * rad; }
+        else { ent.y -= rad; }
+      }
+    }
+  }
+  ent.x = Math.max(58, Math.min(WORLD_W - 58, ent.x));
+  ent.y = Math.max(58, Math.min(WORLD_H - 58, ent.y));
+}
+
+// ====================================================== CATNIP UPGRADE SHOP (BALANCED ECONOMY)
+const UPGRADES = [
+  { id: 'claws',    name: 'Острые Когти',       desc: '+25% урон и радиус царапок',      base: 10, lvl: 0, max: 8 },
+  { id: 'yarn',     name: 'Клубок-Рикошет',     desc: '+1 отскакивающий клубок',         base: 14, lvl: 0, max: 5 },
+  { id: 'bones',    name: 'Рыбьи Кости',        desc: '+2 пробивающие кости веером',     base: 18, lvl: 0, max: 5 },
+  { id: 'bomb',     name: 'Мятная Бомба',       desc: 'AoE взрыв мяты и замедление',     base: 22, lvl: 0, max: 5 },
+  { id: 'paws',     name: 'Турбо-Лапки',        desc: '+16% скорость бега и -КД рывка',  base: 12, lvl: 0, max: 6 },
+  { id: 'kibble',   name: 'Хруст Корма',        desc: '+30 Max HP и лечение 50% HP',     base: 14, lvl: 0, max: 6 },
+  { id: 'magnet',   name: 'Магнит Мяты',        desc: '+45px магнит и +20% шанс/кол-во', base: 15, lvl: 0, max: 6 },
+  { id: 'chadcrit', name: 'Крит Гигачада',      desc: '+15% шанс крита и +35% крит-урон',base: 18, lvl: 0, max: 6 },
+];
+const upLvl = id => (UPGRADES.find(u => u.id === id)?.lvl || 0);
+const upCost = u => Math.round(u.base * Math.pow(1.38, u.lvl));
+
+// ====================================================== GAME STATE
+let catnip = 10, wave = 1, kills = 0, runTime = 0, bossCount = 0;
+let spawnTimer = 0.6, bossTimer = 34;
+let shopOpen = false;
+let camX = 480, camY = 320;
+const visitedRooms = new Set(['Гостиная']);
+let boughtFirstUpgrade = false, monologueIdx = 0;
+const keys = {};
+
+const player = {
+  x: 480, y: 340, faceAngle: Math.PI / 2, waddle: 0,
+  hp: 100, maxHp: 100, hurtCd: 0,
+  dashTimer: 0, dashCd: 0, dashDx: 0, dashDy: 0,
+  ultCharge: 100, ultTimer: 0,
+  clawCd: 0, yarnCd: 0, boneCd: 0, bombCd: 0,
+};
+
+let mice = [], bosses = [], projs = [], nipDrops = [], slashes = [], particles = [], floats = [];
+
+// ====================================================== DIALOGUE / MONOLOGUE SYSTEM
+const dlgQueue = [];
+let dlgActive = null, dlgChar = 0;
+
+function pushDialogue(speaker, portraitKey, text) {
+  dlgQueue.push({ speaker, portraitKey, text });
+  if (!dlgActive) advanceDialogue();
+}
+function advanceDialogue() {
+  if (dlgActive && dlgChar < dlgActive.text.length) {
+    dlgChar = dlgActive.text.length;
+    $('dlgText').textContent = dlgActive.text;
+    return;
+  }
+  if (dlgQueue.length > 0) {
+    dlgActive = dlgQueue.shift();
+    dlgChar = 0;
+    $('dlgSpeaker').textContent = dlgActive.speaker;
+    $('dlgPortrait').src = ASSET_FILES[dlgActive.portraitKey];
+    $('dlgText').textContent = '';
+    $('dialogueBox').classList.add('show');
+  } else {
+    dlgActive = null;
+    $('dialogueBox').classList.remove('show');
+  }
+}
+$('dialogueBox').onclick = advanceDialogue;
+
+// ====================================================== BOSS TIMING BAR + QTE COMBO MINI-GAME
+const mg = {
+  active: false, boss: null, stage: 0,
+  cursor: 0.05, dir: 1, perfectBar: false,
+  keysSeq: [], keyIdx: 0, timer: 0, maxTimer: 4.8,
+};
+
+function startBossMinigame(bossObj, comboLen = 3) {
+  mg.active = true;
+  mg.boss = bossObj;
+  mg.stage = 0;
+  mg.cursor = 0.05;
+  mg.dir = 1;
+  mg.perfectBar = false;
+  mg.timer = 4.8;
+  mg.maxTimer = 4.8;
+  mg.keyIdx = 0;
+  const pool = [
+    { code: 'KeyW', lbl: 'W' },
+    { code: 'KeyA', lbl: 'A' },
+    { code: 'KeyS', lbl: 'S' },
+    { code: 'KeyD', lbl: 'D' },
+  ];
+  mg.keysSeq = Array.from({ length: comboLen }, () => pool[Math.floor(Math.random() * 4)]);
+  $('mgLeftPort').src = ASSET_FILES.portrait_bebechad;
+  $('mgTitle').textContent = 'БОСС-МИНИ-ИГРА: ПРОБИТИЕ СЫРНОГО ЩИТА!';
+  $('mgSub').textContent = 'Этап 1: Нажми [ПРОБЕЛ] или Клик в зелёной зоне!';
+  $('timingBar').style.display = 'block';
+  $('qteRow').style.display = 'none';
+  $('minigameBox').classList.add('show');
+}
+
+function renderQteKeys() {
+  const row = $('qteRow');
+  row.innerHTML = '';
+  mg.keysSeq.forEach((k, i) => {
+    const d = document.createElement('div');
+    d.className = 'qte-key' + (i < mg.keyIdx ? ' done' : (i === mg.keyIdx ? ' active' : ''));
+    d.textContent = k.lbl;
+    row.appendChild(d);
+  });
+}
+
+function finishBossMinigame(success, perfect) {
+  const b = mg.boss;
+  mg.active = false;
+  mg.boss = null;
+  $('minigameBox').classList.remove('show');
+  if (!b || b.dead) return;
+  b.shield = false;
+  if (success) {
+    const dmg = Math.round(b.maxHp * (perfect ? 0.34 : 0.25));
+    b.hp -= dmg;
+    b.stunTimer = 2.6;
+    b.flash = 0.28;
+    const bonusNip = perfect ? 20 : 12;
+    catnip += bonusNip;
+    spawnBurst(b.x, b.y, 26, ['#fae04b', '#7ef29d', '#ffffff']);
+    addFloat(b.x, b.y - 26, perfect ? `ГИГАЧАД-УДАР! -${dmg}!!` : `ЩИТ ПРОБИТ! -${dmg}!`, '#fae04b', true);
+    pushDialogue('Bebechad', 'portrait_bebechad', perfect
+      ? `ИДЕАЛЬНЫЙ ГИГАЧАД-УДАР (-${dmg} HP, +${bonusNip} мяты)! Твой сырный щит разлетелся в крошки!`
+      : `Щит пробит (-${dmg} HP, +${bonusNip} мяты)! Получай когтистой лапой!`);
+    if (b.hp <= 0) killBoss(b);
+  } else {
+    player.hp = Math.max(1, player.hp - 12);
+    player.hurtCd = 0.6;
+    spawnBurst(player.x, player.y, 18, ['#ff586e', '#fae04b']);
+    addFloat(player.x, player.y - 20, 'ПРОМАХ! -12 HP', '#ff586e', true);
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      projs.push({ kind: 'cheese', x: b.x, y: b.y, vx: Math.cos(a) * 210, vy: Math.sin(a) * 210, dmg: 10, life: 2.0, hitIds: new Set() });
+    }
+    pushDialogue('Bebechad', 'portrait_cat_angry', 'МЯУ?! Промахнулся! Крыса, ты за это ответишь!');
+  }
+}
+
+function handleMinigameTimingPress() {
+  if (!mg.active || mg.stage !== 0) return;
+  if (mg.cursor >= 0.36 && mg.cursor <= 0.64) {
+    mg.perfectBar = Math.abs(mg.cursor - 0.50) <= 0.055;
+    mg.stage = 1;
+    mg.timer = Math.min(mg.maxTimer, mg.timer + 1.8);
+    $('mgSub').textContent = mg.perfectBar
+      ? 'ИДЕАЛЬНО! Этап 2: Быстро прожми QTE-комбо!'
+      : 'ПОПАЛ! Этап 2: Быстро прожми QTE-комбо!';
+    $('timingBar').style.display = 'none';
+    $('qteRow').style.display = 'flex';
+    renderQteKeys();
+  } else {
+    finishBossMinigame(false, false);
+  }
+}
+$('minigameBox').onclick = () => { if (mg.active && mg.stage === 0) handleMinigameTimingPress(); };
+
+// ====================================================== SHOP UI
+function refreshShopUI() {
+  $('shopBal').textContent = catnip;
+  const grid = $('shopGrid');
+  grid.innerHTML = '';
+  UPGRADES.forEach((u, idx) => {
+    const cost = upCost(u);
+    const maxed = u.lvl >= u.max;
+    const afford = !maxed && catnip >= cost;
+    const el = document.createElement('div');
+    el.className = 'up-card' + (maxed ? ' maxed' : (afford ? ' afford' : ''));
+    el.innerHTML = `<div>
+        <div class="up-name">[${idx + 1}] ${u.name} (Ур.${u.lvl}/${u.max})</div>
+        <div class="up-desc">${u.desc}</div>
+      </div>
+      <div class="up-price">${maxed ? 'MAX' : `${cost} 🌿`}</div>`;
+    el.onclick = () => buyUpgrade(idx);
+    grid.appendChild(el);
+  });
+}
+
+function buyUpgrade(idx) {
+  const u = UPGRADES[idx];
+  if (!u || u.lvl >= u.max) return;
+  const cost = upCost(u);
+  if (catnip < cost) return;
+  catnip -= cost;
+  $('nipTxt').textContent = catnip;
+  u.lvl++;
+  if (u.id === 'kibble') {
+    player.maxHp += 30;
+    player.hp = Math.min(player.maxHp, player.hp + Math.round(player.maxHp * 0.5));
+  }
+  addFloat(player.x, player.y - 24, `+ ${u.name} (Ур.${u.lvl})`, '#7ef29d', true);
+  refreshShopUI();
+}
+
+function toggleShop(force) {
+  if (mg.active || dlgActive) return;
+  shopOpen = typeof force === 'boolean' ? force : !shopOpen;
+  $('shopModal').classList.toggle('show', shopOpen);
+  if (shopOpen) refreshShopUI();
+}
+
+// ====================================================== COMBAT HELPERS
+let nextId = 1;
+function spawnBurst(x, y, count, cols) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 45 + Math.random() * 110;
+    particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, c: cols[i % cols.length], life: 0.3 + Math.random() * 0.25 });
+  }
+}
+function addFloat(x, y, txt, col = '#fff', big = false) {
+  floats.push({ x, y, txt, col, big, life: 0.85 });
+}
+
+function spawnMouse() {
+  const a = Math.random() * Math.PI * 2, d = 260 + Math.random() * 150;
+  const x = Math.max(70, Math.min(WORLD_W - 70, player.x + Math.cos(a) * d));
+  const y = Math.max(70, Math.min(WORLD_H - 70, player.y + Math.sin(a) * d));
+  const fast = wave >= 2 && Math.random() < 0.3;
+  const hp = Math.round((fast ? 18 : 26) + wave * 8);
+  mice.push({ id: nextId++, x, y, vx: 0, vy: 0, hp, maxHp: hp, spd: fast ? 132 : (84 + Math.min(40, wave * 5)), fast, r: 12, ang: 0, flash: 0, slow: 0, dead: false });
+}
+
+function spawnRatBoss() {
+  if (bosses.length > 0) return;
+  bossCount++;
+  const bossCatalog = [
+    {
+      name: 'Сэр Сырогрыз',
+      taunt: 'Хе-хе! Хозяева уехали — значит, холодильник и весь сыр на острове теперь НАШИ!',
+      reply: 'МОЙ ХОЛОДИЛЬНИК?! Ты только что подписал себе приговор, хвостатый наглец!',
+      chad:  'Запомни, Сэр Сырогрыз: на этой кухне главный хищник — Bebechad.',
+    },
+    {
+      name: 'Крысиный Барон',
+      taunt: 'Подвал уже наш, котик! Скоро мы прогрызём твой любимый диван в гостиной!',
+      reply: 'НЕ СМЕЙ ТРОГАТЬ МОЙ ДИВАН!! Я на нём три года место вылеживал!',
+      chad:  'Ни одна крыса в короне не посмеет царапать мебель вместо меня.',
+    },
+    {
+      name: 'Император Подвала',
+      taunt: 'Моей армии мышей нет конца! Сдавай Кошачью Мяту — и мы оставим тебе когтеточку!',
+      reply: 'ОТДАТЬ МЯТУ?! Да у меня сейчас шерсть дыбом встанет от такой наглости!',
+      chad:  'Готовь свой сырный щит, Император. Сейчас будем проверять его на прочность.',
+    },
+  ];
+  const spec = bossCatalog[(bossCount - 1) % bossCatalog.length];
+  const bx = Math.max(120, Math.min(WORLD_W - 120, player.x + (player.x > MID_X ? -240 : 240)));
+  const by = Math.max(120, Math.min(WORLD_H - 120, player.y));
+  const maxHp = 360 + bossCount * 220;
+  bosses.push({
+    id: nextId++, name: spec.name, x: bx, y: by, hp: maxHp, maxHp, spd: 92, r: 26, ang: 0,
+    flash: 0, stunTimer: 0, shootCd: 1.6, shield: false, p1: false, p2: false, dead: false,
+  });
+  pushDialogue(spec.name, 'portrait_rat', spec.taunt);
+  pushDialogue('Bebechad', 'portrait_cat_angry', spec.reply);
+  pushDialogue('Bebechad', 'portrait_bebechad', spec.chad);
+}
+
+function killBoss(b) {
+  if (b.dead) return;
+  b.dead = true;
+  kills++;
+  const reward = 30 + bossCount * 10;
+  // Fountain of collectible Catnip leaves!
+  const nLeaves = 6;
+  const perLeaf = Math.max(3, Math.round(reward / nLeaves));
+  for (let k = 0; k < nLeaves; k++) {
+    const a = (k / nLeaves) * Math.PI * 2 + Math.random() * 0.4;
+    nipDrops.push({ x: b.x + Math.cos(a) * 26, y: b.y + Math.sin(a) * 26, val: perLeaf });
+  }
+  spawnBurst(b.x, b.y, 34, ['#fae04b', '#7ef29d', '#ff586e', '#ffffff']);
+  addFloat(b.x, b.y - 26, `БОСС ПОВЕРЖЕН! +${reward} МЯТЫ!`, '#fae04b', true);
+  pushDialogue('Bebechad', 'portrait_bebechad', `${b.name} отправлен обратно в нору! Забираем заслуженную Кошачью Мяту.`);
+}
+
+function damageTarget(t, rawDmg, knockAng, isBoss) {
+  if (t.dead) return;
+  const critCh = 0.08 + upLvl('chadcrit') * 0.15;
+  const critMul = 1.8 + upLvl('chadcrit') * 0.35;
+  const isCrit = Math.random() < critCh;
+  const dmg = Math.max(1, Math.round(rawDmg * (isCrit ? critMul : 1) * (t.shield ? 0.35 : 1)));
+  t.hp -= dmg;
+  t.flash = 0.14;
+  if (!isBoss && knockAng !== null) {
+    t.vx += Math.cos(knockAng) * 190;
+    t.vy += Math.sin(knockAng) * 190;
+  }
+  addFloat(t.x, t.y - (isBoss ? 28 : 14), isCrit ? `${dmg}!` : `${dmg}`, isCrit ? '#fae04b' : '#fff', isCrit);
+  spawnBurst(t.x, t.y, isCrit ? 7 : 4, isCrit ? ['#fae04b', '#fff'] : ['#fff', '#ff8c9b']);
+  if (t.hp <= 0) {
+    if (isBoss) {
+      killBoss(t);
+    } else {
+      t.dead = true;
+      kills++;
+      player.ultCharge = Math.min(100, player.ultCharge + 6);
+      // Balanced Catnip drop rate: 55% normal (1 leaf), 75% fast (2 leaves), scaled by Magnet upgrade!
+      const magLv = upLvl('magnet');
+      const dropChance = Math.min(0.95, (t.fast ? 0.75 : 0.55) + magLv * 0.08);
+      if (Math.random() < dropChance) {
+        const val = Math.max(1, Math.round((t.fast ? 2 : 1) * (1 + magLv * 0.25)));
+        nipDrops.push({ x: t.x, y: t.y, val });
+      }
+    }
+  }
+}
+
+function triggerUlt() {
+  if (player.ultCharge < 100 || shopOpen || dlgActive || mg.active) return;
+  player.ultCharge = 0;
+  player.ultTimer = 4.2;
+  spawnBurst(player.x, player.y, 32, ['#fae04b', '#7ef29d', '#ffffff']);
+  slashes.push({ x: player.x, y: player.y, r: 190, ang: 0, full: true, col: '#fae04b', life: 0.32, maxLife: 0.32 });
+  addFloat(player.x, player.y - 34, 'ГИГАЧАД-МЯУ!!', '#fae04b', true);
+  for (const m of mice) {
+    if (!m.dead && Math.hypot(m.x - player.x, m.y - player.y) < 200) {
+      damageTarget(m, 36 + upLvl('claws') * 12, Math.atan2(m.y - player.y, m.x - player.x), false);
+    }
+  }
+  for (const b of bosses) {
+    if (!b.dead && Math.hypot(b.x - player.x, b.y - player.y) < 220) {
+      damageTarget(b, 48 + upLvl('claws') * 14, null, true);
+    }
+  }
+}
+
+// ====================================================== MAIN LOOP
+let lastTs = 0;
+function startGame() {
+  pushDialogue('Bebechad', 'portrait_bebechad', 'Хозяева уехали на выходные. Весь дом мой. Время легендарного чилла.');
+  pushDialogue('Bebechad', 'portrait_cat_angry', 'СТОП... ЧТО ЭТО ШУРШИТ НА КУХНЕ И В ПОДВАЛЕ?! ОПЯТЬ ЭТИ МЫШИ?!');
+  pushDialogue('Bebechad', 'portrait_bebechad', 'Ладно. Разминаем когти. Собираем Кошачью Мяту — и выносим всю крысиную банду!');
+  for (let i = 0; i < 6; i++) spawnMouse();
+  lastTs = performance.now();
+  requestAnimationFrame(loop);
+}
+
+function loop(ts) {
+  const rawDt = Math.min(0.05, (ts - lastTs) / 1000);
+  lastTs = ts;
+  const tSec = ts * 0.001;
+
+  // Typewriter dialogue update
+  if (dlgActive) {
+    if (dlgChar < dlgActive.text.length) {
+      dlgChar = Math.min(dlgActive.text.length, dlgChar + rawDt * 58);
+      $('dlgText').textContent = dlgActive.text.slice(0, Math.floor(dlgChar));
+    }
+  }
+
+  // Boss Mini-game update
+  if (mg.active) {
+    mg.timer -= rawDt;
+    $('mgFuse').style.width = `${Math.max(0, (mg.timer / mg.maxTimer) * 100)}%`;
+    if (mg.stage === 0) {
+      mg.cursor += mg.dir * rawDt * 1.48;
+      if (mg.cursor >= 1) { mg.cursor = 1; mg.dir = -1; }
+      if (mg.cursor <= 0) { mg.cursor = 0; mg.dir = 1; }
+      $('timingCursor').style.left = `${mg.cursor * 100}%`;
+    }
+    if (mg.timer <= 0) finishBossMinigame(false, false);
+  }
+
+  const dt = (shopOpen || dlgActive) ? 0 : (mg.active ? rawDt * 0.08 : rawDt);
+
+  if (dt > 0) {
+    runTime += dt;
+    wave = 1 + Math.floor(runTime / 20);
+    const mm = Math.floor(runTime / 60), ss = String(Math.floor(runTime % 60)).padStart(2, '0');
+    $('timeTxt').textContent = `${mm}:${ss}`;
+    $('waveTxt').textContent = wave;
+
+    // Spawn mice
+    spawnTimer -= dt;
+    if (spawnTimer <= 0 && mice.length < Math.min(48, 8 + wave * 5)) {
+      spawnTimer = Math.max(0.32, 1.25 - wave * 0.1);
+      spawnMouse();
+    }
+    // Boss timer
+    bossTimer -= dt;
+    if (bossTimer <= 0 && bosses.length === 0) {
+      bossTimer = 46;
+      spawnRatBoss();
+    }
+
+    // Player movement
+    let ix = (keys['KeyD'] || keys['ArrowRight'] ? 1 : 0) - (keys['KeyA'] || keys['ArrowLeft'] ? 1 : 0);
+    let iy = (keys['KeyS'] || keys['ArrowDown'] ? 1 : 0) - (keys['KeyW'] || keys['ArrowUp'] ? 1 : 0);
+    const mv = Math.hypot(ix, iy) > 0;
+    if (mv) { const l = Math.hypot(ix, iy); ix /= l; iy /= l; }
+    const spd = (195 + upLvl('paws') * 30) * (player.ultTimer > 0 ? 1.32 : 1.0);
+
+    if (player.hurtCd > 0) player.hurtCd = Math.max(0, player.hurtCd - dt);
+    if (player.dashCd > 0) player.dashCd = Math.max(0, player.dashCd - dt);
+    if (player.ultTimer > 0) player.ultTimer = Math.max(0, player.ultTimer - dt);
+
+    const dashMax = Math.max(0.85, 2.2 - upLvl('paws') * 0.22);
+    if ((keys['ShiftLeft'] || keys['ShiftRight']) && player.dashCd <= 0 && player.dashTimer <= 0) {
+      const da = mv ? Math.atan2(iy, ix) : player.faceAngle;
+      player.dashDx = Math.cos(da); player.dashDy = Math.sin(da);
+      player.dashTimer = 0.22; player.dashCd = dashMax;
+      spawnBurst(player.x, player.y, 8, ['#fae04b', '#ffffff']);
+    }
+
+    if (player.dashTimer > 0) {
+      player.dashTimer -= dt;
+      player.x += player.dashDx * 560 * dt;
+      player.y += player.dashDy * 560 * dt;
+    } else if (mv) {
+      player.x += ix * spd * dt;
+      player.y += iy * spd * dt;
+      player.faceAngle = Math.atan2(iy, ix);
+      player.waddle += dt * 15;
+    }
+    resolveHouseCollision(player, 18);
+
+    // Nearest enemy search
+    let nearest = null, bestD = 360;
+    for (const b of bosses) { const d = Math.hypot(b.x - player.x, b.y - player.y); if (d < bestD) { bestD = d; nearest = b; } }
+    for (const m of mice) { const d = Math.hypot(m.x - player.x, m.y - player.y); if (d < bestD) { bestD = d; nearest = m; } }
+
+    // Auto-Attack 1: Claw Swipe
+    const atkMul = player.ultTimer > 0 ? 1.65 : 1.0;
+    player.clawCd -= dt * atkMul;
+    const clawRad = 54 + upLvl('claws') * 10;
+    if (player.clawCd <= 0 && nearest && bestD < clawRad + 56) {
+      player.clawCd = 0.44;
+      const a = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+      const cx = player.x + Math.cos(a) * 32, cy = player.y + Math.sin(a) * 32;
+      const dmg = (18 + upLvl('claws') * 7) * (player.ultTimer > 0 ? 1.45 : 1);
+      slashes.push({ x: cx, y: cy, r: clawRad, ang: a, full: false, col: player.ultTimer > 0 ? '#fae04b' : '#fff5d6', life: 0.16, maxLife: 0.16 });
+      for (const m of mice) if (!m.dead && Math.hypot(m.x - cx, m.y - cy) <= clawRad + m.r) damageTarget(m, dmg, a, false);
+      for (const b of bosses) if (!b.dead && Math.hypot(b.x - cx, b.y - cy) <= clawRad + b.r) damageTarget(b, dmg, a, true);
+    }
+
+    // Auto-Attack 2: Bouncing Yarn Ball
+    if (upLvl('yarn') > 0) {
+      player.yarnCd -= dt * atkMul;
+      if (player.yarnCd <= 0 && nearest) {
+        player.yarnCd = Math.max(0.42, 1.05 - upLvl('yarn') * 0.1);
+        const a = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+        projs.push({ kind: 'yarn', x: player.x, y: player.y, vx: Math.cos(a) * 350, vy: Math.sin(a) * 350, dmg: 16 + upLvl('yarn') * 6, bounces: 2 + upLvl('yarn'), life: 2.2, hitIds: new Set() });
+      }
+    }
+
+    // Auto-Attack 3: Piercing Fishbone Fan
+    if (upLvl('bones') > 0) {
+      player.boneCd -= dt * atkMul;
+      if (player.boneCd <= 0 && nearest) {
+        player.boneCd = 0.85;
+        const cnt = 2 + upLvl('bones');
+        const base = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+        for (let i = 0; i < cnt; i++) {
+          const off = -0.34 + (0.68 * i) / Math.max(1, cnt - 1);
+          const a = base + off;
+          projs.push({ kind: 'bone', x: player.x, y: player.y, vx: Math.cos(a) * 430, vy: Math.sin(a) * 430, dmg: 14 + upLvl('bones') * 4, pierce: 3, life: 1.2, hitIds: new Set() });
+        }
+      }
+    }
+
+    // Auto-Attack 4: Catnip AoE Bomb
+    if (upLvl('bomb') > 0) {
+      player.bombCd -= dt * atkMul;
+      if (player.bombCd <= 0 && nearest) {
+        player.bombCd = Math.max(0.95, 1.9 - upLvl('bomb') * 0.16);
+        const rad = 76 + upLvl('bomb') * 14, dmg = 26 + upLvl('bomb') * 10;
+        slashes.push({ x: nearest.x, y: nearest.y, r: rad, ang: 0, full: true, col: '#7ef29d', life: 0.34, maxLife: 0.34 });
+        spawnBurst(nearest.x, nearest.y, 14, ['#7ef29d', '#42cc76', '#ffffff']);
+        for (const m of mice) if (!m.dead && Math.hypot(m.x - nearest.x, m.y - nearest.y) <= rad + m.r) { m.slow = 2.0; damageTarget(m, dmg, Math.atan2(m.y - nearest.y, m.x - nearest.x), false); }
+        for (const b of bosses) if (!b.dead && Math.hypot(b.x - nearest.x, b.y - nearest.y) <= rad + b.r) damageTarget(b, dmg, null, true);
+      }
+    }
+
+    // Update Mice
+    for (const m of mice) {
+      if (m.dead) continue;
+      if (m.flash > 0) m.flash -= dt;
+      if (m.slow > 0) m.slow -= dt;
+      const dx = player.x - m.x, dy = player.y - m.y, d = Math.hypot(dx, dy) || 1;
+      const sMul = m.slow > 0 ? 0.55 : 1.0;
+      m.ang = Math.atan2(dy, dx);
+      m.x += ((dx / d) * m.spd * sMul + m.vx) * dt;
+      m.y += ((dy / d) * m.spd * sMul + m.vy) * dt;
+      m.vx *= Math.pow(0.002, dt); m.vy *= Math.pow(0.002, dt);
+      resolveHouseCollision(m, m.r);
+      if (d < m.r + 16 && player.hurtCd <= 0 && player.dashTimer <= 0) {
+        player.hp = Math.max(0, player.hp - 7); player.hurtCd = 0.55;
+        addFloat(player.x, player.y - 20, '-7', '#ff586e', true);
+        if (player.hp <= 0) resetGame();
+      }
+    }
+    mice = mice.filter(m => !m.dead);
+
+    // Update Rat Bosses
+    for (const b of bosses) {
+      if (b.dead) continue;
+      if (b.flash > 0) b.flash -= dt;
+      if (b.stunTimer > 0) { b.stunTimer -= dt; continue; }
+      if (!b.p1 && b.hp <= b.maxHp * 0.66) { b.p1 = true; b.shield = true; startBossMinigame(b, 3); continue; }
+      if (!b.p2 && b.hp <= b.maxHp * 0.33) { b.p2 = true; b.shield = true; startBossMinigame(b, 4); continue; }
+      const dx = player.x - b.x, dy = player.y - b.y, d = Math.hypot(dx, dy) || 1;
+      b.ang = Math.atan2(dy, dx);
+      b.x += (dx / d) * b.spd * dt; b.y += (dy / d) * b.spd * dt;
+      resolveHouseCollision(b, b.r);
+      b.shootCd -= dt;
+      if (b.shootCd <= 0) {
+        b.shootCd = 2.0;
+        for (let k = 0; k < 6; k++) {
+          const a = b.ang + (k / 6) * Math.PI * 2;
+          projs.push({ kind: 'cheese', x: b.x, y: b.y, vx: Math.cos(a) * 195, vy: Math.sin(a) * 195, dmg: 10, life: 2.2, hitIds: new Set() });
+        }
+      }
+      if (d < b.r + 18 && player.hurtCd <= 0 && player.dashTimer <= 0) {
+        player.hp = Math.max(0, player.hp - 14); player.hurtCd = 0.65;
+        addFloat(player.x, player.y - 22, '-14', '#ff586e', true);
+        if (player.hp <= 0) resetGame();
+      }
+    }
+    bosses = bosses.filter(b => !b.dead);
+
+    // Projectiles
+    for (let i = projs.length - 1; i >= 0; i--) {
+      const p = projs[i];
+      p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+      let rem = p.life <= 0;
+      if (!rem && p.kind === 'cheese') {
+        if (Math.hypot(p.x - player.x, p.y - player.y) < 20) {
+          if (player.hurtCd <= 0 && player.dashTimer <= 0) {
+            player.hp = Math.max(0, player.hp - p.dmg); player.hurtCd = 0.5;
+            addFloat(player.x, player.y - 20, `-${p.dmg}`, '#ff586e', true);
+            if (player.hp <= 0) resetGame();
+          }
+          rem = true;
+        }
+      } else if (!rem) {
+        for (const list of [[mice, false], [bosses, true]]) {
+          for (const t of list[0]) {
+            if (t.dead || p.hitIds.has(t.id)) continue;
+            if (Math.hypot(p.x - t.x, p.y - t.y) < t.r + 11) {
+              p.hitIds.add(t.id);
+              damageTarget(t, p.dmg, Math.atan2(p.vy, p.vx), list[1]);
+              if (p.kind === 'yarn') {
+                if (p.bounces > 0) {
+                  p.bounces--;
+                  const na = Math.atan2(p.vy, p.vx) + 2.1 + Math.random();
+                  const sp = Math.hypot(p.vx, p.vy);
+                  p.vx = Math.cos(na) * sp; p.vy = Math.sin(na) * sp;
+                } else { rem = true; break; }
+              } else if (p.kind === 'bone') {
+                p.pierce--;
+                if (p.pierce <= 0) { rem = true; break; }
+              }
+            }
+          }
+          if (rem) break;
+        }
+      }
+      if (rem) projs.splice(i, 1);
+    }
+
+    // Catnip Drops
+    const magR = 96 + upLvl('magnet') * 45;
+    for (let i = nipDrops.length - 1; i >= 0; i--) {
+      const n = nipDrops[i];
+      const dx = player.x - n.x, dy = player.y - n.y, d = Math.hypot(dx, dy);
+      if (d < magR && d > 0.1) { n.x += (dx / d) * 320 * dt; n.y += (dy / d) * 320 * dt; }
+      if (d < 22) { catnip += n.val; nipDrops.splice(i, 1); }
+    }
+
+    for (let i = slashes.length - 1; i >= 0; i--) { slashes[i].life -= dt; if (slashes[i].life <= 0) slashes.splice(i, 1); }
+    for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; if (p.life <= 0) particles.splice(i, 1); }
+    for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.y -= 36 * dt; f.life -= dt; if (f.life <= 0) floats.splice(i, 1); }
+
+    camX += (player.x - camX) * Math.min(1, dt * 8);
+    camY += (player.y - camY) * Math.min(1, dt * 8);
+
+    // HUD updates & first-visit room monologues!
+    const curRoom = getRoomName(player.x, player.y);
+    if (!visitedRooms.has(curRoom) && !dlgActive && !mg.active) {
+      visitedRooms.add(curRoom);
+      if (curRoom === 'Кухня') {
+        pushDialogue('Bebechad', 'portrait_cat_angry', 'ЭЙ!! Кто надкусил сыр на острове и оставил крошки у МОЕГО холодильника?!');
+      } else if (curRoom === 'Подвал') {
+        pushDialogue('Bebechad', 'portrait_bebechad', 'Мрачновато. Пахнет сыростью, кирпичом и крысиными амбициями. Сейчас закроем эти норы.');
+      } else if (curRoom === 'Задний двор') {
+        pushDialogue('Bebechad', 'portrait_bebechad', 'Свежая травка, пруд, грядка кошачьей мяты... Идеальное место, чтобы размять лапы.');
+      }
+    }
+    $('nipTxt').textContent = catnip;
+    $('killsTxt').textContent = kills;
+    $('roomTxt').textContent = curRoom;
+    $('hpFill').style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
+    $('hpTxt').textContent = `${Math.ceil(player.hp)} / ${player.maxHp} HP`;
+    $('dashFill').style.width = `${Math.round((1 - player.dashCd / dashMax) * 100)}%`;
+    $('dashTxt').textContent = player.dashCd > 0.05 ? `[Shift] ${player.dashCd.toFixed(1)}с` : '[Shift] РЫВОК';
+    $('ultFill').style.width = `${Math.round(player.ultCharge)}%`;
+    $('ultTxt').textContent = player.ultTimer > 0 ? `ГИГАЧАД ${player.ultTimer.toFixed(1)}с!` : (player.ultCharge >= 100 ? '[F] ГИГАЧАД!' : `[F] ${Math.round(player.ultCharge)}%`);
+    $('ultPill').classList.toggle('ready', player.ultCharge >= 100);
+
+    if (bosses.length > 0) {
+      const b = bosses[0];
+      $('bossBar').style.display = 'block';
+      $('bossFill').style.width = `${Math.max(0, (b.hp / b.maxHp) * 100)}%`;
+      $('bossTxt').textContent = `БОСС: ${b.name} (${Math.max(0, Math.ceil(b.hp))} / ${b.maxHp})${b.shield ? ' [ЩИТ!]' : ''}`;
+    } else $('bossBar').style.display = 'none';
+  }
+
+  // ====================================================== RENDER WORLD (2x Crisp Pixel Scale!)
+  cv.width = innerWidth; cv.height = innerHeight;
+  ctx.imageSmoothingEnabled = false;
+  const ZOOM = 1.65;
+  const vw = cv.width / ZOOM, vh = cv.height / ZOOM;
+  const ox = Math.round(Math.max(0, Math.min(WORLD_W - vw, camX - vw / 2)));
+  const oy = Math.round(Math.max(0, Math.min(WORLD_H - vh, camY - vh / 2)));
+
+  ctx.fillStyle = '#14111c'; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.save();
+  ctx.scale(ZOOM, ZOOM);
+  ctx.translate(-ox, -oy);
+
+  // 1) Room 1: ГОСТИНАЯ — Staggered Oak Floorboards + Ornate Tasseled Rug + Cozy Clutter
+  ctx.fillStyle = '#8b623f'; ctx.fillRect(0, 0, MID_X, MID_Y);
+  for (let row = 0, py = 48; py < 616; row++, py += 20) {
+    ctx.fillStyle = (row & 1) === 0 ? '#845b38' : '#8f6642';
+    ctx.fillRect(48, py, 888, 19);
+    ctx.fillStyle = '#6c4729';
+    ctx.fillRect(48, py + 19, 888, 1);
+    const off = (row % 3) * 44;
+    for (let px = 48 + off; px < 936; px += 116) ctx.fillRect(px, py, 2, 19);
+  }
+  // Ornate Tasseled Living Room Rug (user's exact tile_grass_dark + woven border + golden tassels!)
+  ctx.fillStyle = 'rgba(20, 14, 24, 0.25)'; ctx.fillRect(252, 222, 460, 264);
+  for (let rx = 256; rx < 704; rx += 64) {
+    for (let ry = 224; ry < 480; ry += 64) ctx.drawImage(IMGS.tile_grass_dark, rx, ry);
+  }
+  ctx.strokeStyle = '#c89b44'; ctx.lineWidth = 6; ctx.strokeRect(256, 224, 448, 256);
+  ctx.strokeStyle = '#8a3542'; ctx.lineWidth = 2; ctx.strokeRect(263, 231, 434, 242);
+  ctx.fillStyle = '#f0d68a';
+  for (let ty = 228; ty < 476; ty += 10) {
+    ctx.fillRect(247, ty, 6, 3);
+    ctx.fillRect(707, ty, 6, 3);
+  }
+  // Cozy Living Room decorative toys (non-blocking slipper & yarn tangle)
+  ctx.fillStyle = '#d95b7a'; ctx.beginPath(); ctx.arc(320, 520, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#ff9cb5'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(324, 524); ctx.quadraticCurveTo(342, 534, 355, 522); ctx.stroke();
+  ctx.fillStyle = '#f2c14e'; ctx.fillRect(838, 250, 14, 9); ctx.fillStyle = '#c28b2c'; ctx.fillRect(840, 252, 6, 5);
+
+  // 2) Room 2: КУХНЯ — Checkered Ceramic Floor + Sunlit Window Shafts + Cheese Crumbs + Mousetraps
+  for (let kx = MID_X; kx < WORLD_W; kx += 44) {
+    for (let ky = 0; ky < MID_Y; ky += 44) {
+      const alt = (((kx / 44) + (ky / 44)) & 1) === 0;
+      ctx.fillStyle = alt ? '#e4dac5' : '#c29c7e';
+      ctx.fillRect(kx, ky, 44, 44);
+      ctx.strokeStyle = 'rgba(92, 68, 50, 0.22)'; ctx.lineWidth = 1;
+      ctx.strokeRect(kx + 0.5, ky + 0.5, 43, 43);
+    }
+  }
+  // Warm window sunlight beams slanting onto the kitchen tiles
+  ctx.fillStyle = 'rgba(255, 244, 186, 0.14)';
+  ctx.beginPath(); ctx.moveTo(1380, 48); ctx.lineTo(1530, 48); ctx.lineTo(1460, 230); ctx.lineTo(1310, 230); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(1570, 48); ctx.lineTo(1680, 48); ctx.lineTo(1610, 210); ctx.lineTo(1500, 210); ctx.closePath(); ctx.fill();
+  // Scattered cheese crumbs around kitchen island + decorative wooden mousetraps
+  ctx.fillStyle = '#f5c742';
+  for (const [cx, cy] of [[1310,362],[1324,370],[1510,360],[1535,352],[1420,236],[1680,210]]) {
+    ctx.fillRect(cx, cy, 4, 3);
+  }
+  for (const [mx, my] of [[1040, 580], [1780, 320]]) {
+    ctx.fillStyle = '#a87644'; ctx.fillRect(mx, my, 18, 10);
+    ctx.strokeStyle = '#4a4e5c'; ctx.lineWidth = 1.5; ctx.strokeRect(mx + 2, my + 2, 14, 6);
+    ctx.fillStyle = '#fae04b'; ctx.fillRect(mx + 11, my + 3, 4, 4);
+  }
+
+  // 3) Room 3: ПОДВАЛ — Cracked Slate Stone + Puddles + Drain Grate + Copper Pipes + Bulb Glow
+  ctx.fillStyle = '#363842'; ctx.fillRect(0, MID_Y, MID_X, MID_Y);
+  for (let bx = 48; bx < 936; bx += 64) {
+    for (let by = 664; by < 1232; by += 64) {
+      ctx.fillStyle = (((bx + by) / 64) & 1) === 0 ? '#3a3d48' : '#333640';
+      ctx.fillRect(bx + 1, by + 1, 62, 62);
+    }
+  }
+  // Basement water puddles & center iron floor drain grate
+  ctx.fillStyle = 'rgba(78, 126, 152, 0.36)';
+  ctx.beginPath(); ctx.ellipse(360, 920, 46, 22, 0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(760, 820, 34, 18, -0.3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(175, 222, 245, 0.24)';
+  ctx.fillRect(344, 912, 18, 3); ctx.fillRect(748, 814, 14, 2);
+  // Central iron drain grate
+  ctx.fillStyle = '#20222a'; ctx.fillRect(458, 932, 44, 44);
+  ctx.strokeStyle = '#5a6070'; ctx.lineWidth = 2; ctx.strokeRect(458, 932, 44, 44);
+  for (let gy = 939; gy < 974; gy += 7) { ctx.fillStyle = '#111218'; ctx.fillRect(463, gy, 34, 3); }
+  // Copper pipes running along the basement south wall with red valves
+  ctx.fillStyle = '#9e5d38'; ctx.fillRect(52, 1216, 880, 8);
+  ctx.fillStyle = '#c47b4e'; ctx.fillRect(52, 1217, 880, 2);
+  for (const vx of [220, 480, 740]) {
+    ctx.fillStyle = '#d93848'; ctx.beginPath(); ctx.arc(vx, 1220, 7, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#1a1420'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  // Warm hanging bulb light pool in Basement center
+  const bGrad = ctx.createRadialGradient(480, 954, 18, 480, 954, 220);
+  bGrad.addColorStop(0, 'rgba(255, 214, 118, 0.16)');
+  bGrad.addColorStop(1, 'rgba(255, 214, 118, 0)');
+  ctx.fillStyle = bGrad; ctx.fillRect(240, 720, 480, 460);
+
+  // 4) Room 4: ЗАДНИЙ ДВОР — Exact tile_grass_dark + Stepping Stones + Garden Pond + Interactive Tall Grass + Flowers
+  for (let gx = MID_X; gx < WORLD_W; gx += 64) {
+    for (let gy = MID_Y; gy < WORLD_H; gy += 64) ctx.drawImage(IMGS.tile_grass_dark, gx, gy);
+  }
+  // Curved garden stepping stone pathway linking Kitchen door (1440,664) -> Basement door (984,960)
+  const stepStones = [
+    [1440,692],[1436,736],[1420,780],[1390,822],[1354,864],[1312,902],[1262,934],
+    [1206,954],[1148,960],[1090,960],[1032,960],[1462,824],[1510,858],[1558,894],[1604,934],
+  ];
+  for (const [sx, sy] of stepStones) {
+    ctx.fillStyle = 'rgba(14, 24, 16, 0.35)'; ctx.beginPath(); ctx.ellipse(sx + 2, sy + 3, 18, 12, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#9aa19c'; ctx.beginPath(); ctx.ellipse(sx, sy, 17, 11, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#b9c0ba'; ctx.beginPath(); ctx.ellipse(sx - 2, sy - 2, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  // Cozy Garden Birdbath / Koi Pond (SE backyard) with animated ripples & lily pads!
+  ctx.fillStyle = '#6f7774'; ctx.beginPath(); ctx.ellipse(1705, 795, 72, 52, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2d7aa6'; ctx.beginPath(); ctx.ellipse(1705, 795, 64, 44, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#48a6cf'; ctx.beginPath(); ctx.ellipse(1701, 791, 48, 30, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(220, 248, 255, 0.45)'; ctx.lineWidth = 1.5;
+  const ripR = 10 + ((tSec * 14) % 26);
+  ctx.beginPath(); ctx.ellipse(1705, 795, ripR, ripR * 0.65, 0, 0, Math.PI * 2); ctx.stroke();
+  for (const [lx, ly] of [[1672, 782], [1732, 810], [1720, 772]]) {
+    ctx.fillStyle = '#3b994e'; ctx.beginPath(); ctx.arc(lx, ly, 8, 0.25, Math.PI * 2 - 0.25); ctx.lineTo(lx, ly); ctx.fill();
+  }
+  ctx.fillStyle = '#ff9cb5'; ctx.fillRect(1670, 779, 5, 5); ctx.fillStyle = '#fae04b'; ctx.fillRect(1671, 780, 2, 2);
+
+  // Swaying multi-layered tall grass clumps (user's exact tile_grass_overlay) + colorful garden wildflowers
+  for (let gx = MID_X + 32; gx < WORLD_W - 64; gx += 64) {
+    for (let gy = MID_Y + 32; gy < WORLD_H - 64; gy += 64) {
+      if (Math.hypot(gx + 32 - 1705, gy + 32 - 795) < 88) continue;
+      if ((((gx / 64) + (gy / 64)) & 1) === 0) {
+        const distP = Math.hypot(player.x - (gx + 32), player.y - (gy + 32));
+        const push = distP < 58 ? Math.sign(gx + 32 - player.x || 1) * 5 : 0;
+        const sway = Math.sin(tSec * 2.8 + gx * 0.02 + gy * 0.015) * 2.5 + push;
+        ctx.drawImage(IMGS.tile_grass_overlay, Math.round(gx + sway), gy);
+      }
+    }
+  }
+  const flowers = [[1040,720,'#ff7aa2'],[1070,745,'#fae04b'],[1055,1120,'#ff9a52'],[1390,1140,'#ff7aa2'],[1425,1165,'#9be3ff'],[1810,920,'#fae04b'],[1825,1135,'#ff7aa2']];
+  for (const [fx, fy, fc] of flowers) {
+    ctx.fillStyle = '#295428'; ctx.fillRect(fx - 2, fy + 2, 6, 4);
+    ctx.fillStyle = fc; ctx.fillRect(fx - 2, fy - 2, 5, 5);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(fx, fy, 2, 2);
+  }
+
+  // Room labels subtly on floor
+  ctx.font = '800 12px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.fillText('ГОСТИНАЯ', 480, 74); ctx.fillText('КУХНЯ', 1440, 74);
+  ctx.fillText('ПОДВАЛ', 480, 692); ctx.fillText('ЗАДНИЙ ДВОР', 1440, 692);
+
+  // 5) Wooden Doorway Thresholds connecting all 4 rooms!
+  for (const [dx, dy, dw, dh] of [[936,240,48,160],[936,880,48,160],[400,616,160,48],[1360,616,160,48]]) {
+    ctx.fillStyle = '#9e7044'; ctx.fillRect(dx, dy, dw, dh);
+    ctx.strokeStyle = '#472f1b'; ctx.lineWidth = 2; ctx.strokeRect(dx, dy, dw, dh);
+    ctx.fillStyle = '#b88754'; ctx.fillRect(dx + 4, dy + 4, dw - 8, dh - 8);
+  }
+
+  // 6) Walls (tiled with user's exact tile_brick_moss + soft ambient floor shadow!)
+  for (const w of HOUSE_WALLS) {
+    ctx.fillStyle = 'rgba(14, 10, 20, 0.30)';
+    ctx.fillRect(w.x1, w.y2, w.x2 - w.x1, 12);
+    if (w.brick) {
+      ctx.save(); ctx.beginPath(); ctx.rect(w.x1, w.y1, w.x2 - w.x1, w.y2 - w.y1); ctx.clip();
+      for (let tx = w.x1; tx < w.x2; tx += 64)
+        for (let ty = w.y1; ty < w.y2; ty += 64) ctx.drawImage(IMGS.tile_brick_moss, tx, ty);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#5c4234'; ctx.fillRect(w.x1, w.y1, w.x2 - w.x1, w.y2 - w.y1);
+      ctx.fillStyle = '#755644'; ctx.fillRect(w.x1 + 4, w.y1 + 4, (w.x2 - w.x1) - 8, (w.y2 - w.y1) - 8);
+    }
+    ctx.strokeStyle = '#1c1620'; ctx.lineWidth = 2; ctx.strokeRect(w.x1, w.y1, w.x2 - w.x1, w.y2 - w.y1);
+  }
+
+  // Glowing Basement Rat Burrows tucked against mossy brick walls!
+  for (const br of RAT_BURROWS) {
+    ctx.fillStyle = '#14101c';
+    ctx.beginPath(); ctx.arc(br.x, br.y, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#52444a'; ctx.lineWidth = 2; ctx.stroke();
+    // Blinking yellow rat eyes peering out of the burrow!
+    if (Math.sin(tSec * 2.4 + br.x) > -0.75) {
+      ctx.fillStyle = '#fae04b';
+      ctx.fillRect(br.x - 6, br.y - 2, 3, 3);
+      ctx.fillRect(br.x + 3, br.y - 2, 3, 3);
+    }
+  }
+
+  // Warm backyard garden lanterns along the south brick fence
+  for (const [lx, ly] of [[1080, 1218], [1440, 1218], [1790, 1218]]) {
+    const lg = ctx.createRadialGradient(lx, ly, 4, lx, ly, 58);
+    lg.addColorStop(0, 'rgba(255, 224, 118, 0.34)');
+    lg.addColorStop(1, 'rgba(255, 224, 118, 0)');
+    ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(lx, ly, 58, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#241c2c'; ctx.fillRect(lx - 5, ly - 5, 10, 10);
+    ctx.fillStyle = '#ffe585'; ctx.fillRect(lx - 3, ly - 3, 6, 6);
+  }
+
+  // 7) Hand-Crafted Detailed Pixel-Art Furniture & Props!
+  for (const p of HOUSE_PROPS) {
+    const x = p.x1, y = p.y1, w = p.x2 - p.x1, h = p.y2 - p.y1;
+    ctx.fillStyle = 'rgba(16, 12, 24, 0.36)'; ctx.fillRect(x + 5, y + 6, w, h);
+
+    if (p.kind === 'sofa') {
+      // Plush crimson sofa with armrests, 3 seat cushions, throw blanket & golden pillow
+      ctx.fillStyle = '#752e3a'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#993d4c'; ctx.fillRect(x, y, w, 24); // backrest
+      ctx.fillStyle = '#873543'; ctx.fillRect(x, y, 22, h); ctx.fillRect(x + w - 22, y, 22, h); // armrests
+      for (let c = 0; c < 3; c++) {
+        const cx = x + 24 + c * ((w - 48) / 3);
+        ctx.fillStyle = '#b54c5d'; ctx.fillRect(cx + 2, y + 26, (w - 48) / 3 - 4, h - 32);
+        ctx.fillStyle = '#cf6374'; ctx.fillRect(cx + 4, y + 28, (w - 48) / 3 - 8, 8);
+      }
+      // Golden throw pillow & cream blanket
+      ctx.fillStyle = '#f5c652'; ctx.fillRect(x + 28, y + 24, 34, 28);
+      ctx.strokeStyle = '#9e721c'; ctx.lineWidth = 1.5; ctx.strokeRect(x + 28, y + 24, 34, 28);
+      ctx.fillStyle = '#ede2cc'; ctx.fillRect(x + w - 68, y + 20, 36, h - 22);
+      ctx.fillStyle = '#d4c3a3'; ctx.fillRect(x + w - 68, y + 36, 36, 4); ctx.fillRect(x + w - 68, y + 54, 36, 4);
+    } else if (p.kind === 'tv') {
+      // Wooden TV console + glowing pixel screen
+      ctx.fillStyle = '#5c4132'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#755442'; ctx.fillRect(x + 4, y + 4, w - 8, h - 10);
+      ctx.fillStyle = '#1e222e'; ctx.fillRect(x + 22, y + 8, w - 44, h - 20);
+      ctx.fillStyle = '#5ab4eb'; ctx.fillRect(x + 27, y + 13, w - 54, h - 30);
+      ctx.fillStyle = '#a8e4ff'; ctx.fillRect(x + 31, y + 16, 26, 6);
+      // Soft cyan TV glow on floorboards below!
+      const tvg = ctx.createRadialGradient(x + w / 2, y + h + 28, 6, x + w / 2, y + h + 28, 85);
+      tvg.addColorStop(0, 'rgba(92, 192, 255, 0.20)'); tvg.addColorStop(1, 'rgba(92, 192, 255, 0)');
+      ctx.fillStyle = tvg; ctx.fillRect(x - 10, y + h, w + 20, 95);
+    } else if (p.kind === 'cat_tree') {
+      // Multi-tier cat scratching post with sisal pillar & round plush perch
+      ctx.fillStyle = '#9e7a56'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#c49d72'; ctx.fillRect(x + 6, y + 6, w - 12, h - 12);
+      ctx.fillStyle = '#deb982'; ctx.beginPath(); ctx.arc(x + w / 2, y + h / 2, 24, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#705232'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#e8d8be'; ctx.beginPath(); ctx.arc(x + w / 2, y + h / 2, 14, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e87b92'; ctx.fillRect(x + w - 14, y + 12, 8, 6); // little toy mouse
+    } else if (p.kind === 'bookshelf') {
+      ctx.fillStyle = '#5c3e2a'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#7a5438'; ctx.fillRect(x + 5, y + 5, w - 10, h - 10);
+      const bookCols = ['#d94e5a', '#4898c7', '#46b56c', '#f5c652', '#a864c4', '#e88b48'];
+      for (let b = 0; b < 8; b++) {
+        ctx.fillStyle = bookCols[b % bookCols.length];
+        ctx.fillRect(x + 10 + b * 10, y + 10, 8, h - 22);
+      }
+    } else if (p.kind === 'plant') {
+      // Terracotta pot with lush radiating pixel monstera leaves
+      const cx = x + w / 2, cy = y + h / 2;
+      ctx.fillStyle = '#b55e3d'; ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#472c1e'; ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.fill();
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI * 2 + 0.3;
+        ctx.fillStyle = (k & 1) === 0 ? '#328f46' : '#4ec464';
+        ctx.beginPath(); ctx.ellipse(cx + Math.cos(a) * 12, cy + Math.sin(a) * 12, 9, 5, a, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = '#7ef29d'; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+      continue;
+    } else if (p.kind === 'stove') {
+      // Kitchen counter + 4 black burners + simmering pot + stainless sink
+      ctx.fillStyle = '#b4bcc6'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#d4dce6'; ctx.fillRect(x + 4, y + 4, w - 8, h - 10);
+      // 4 stove burners
+      for (const [bx, by] of [[x+34,y+20],[x+74,y+20],[x+34,y+46],[x+74,y+46]]) {
+        ctx.fillStyle = '#252630'; ctx.beginPath(); ctx.arc(bx, by, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#ff6b42'; ctx.lineWidth = 1.5; if (bx === x + 34 && by === y + 20) ctx.stroke();
+      }
+      // Copper simmering pot on burner 1
+      ctx.fillStyle = '#c46c38'; ctx.beginPath(); ctx.arc(x + 34, y + 20, 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#e8955c'; ctx.beginPath(); ctx.arc(x + 32, y + 18, 8, 0, Math.PI * 2); ctx.fill();
+      // Stainless sink basin on right side
+      ctx.fillStyle = '#6c7c8c'; ctx.fillRect(x + w - 98, y + 12, 78, h - 24);
+      ctx.fillStyle = '#89b4cf'; ctx.fillRect(x + w - 92, y + 18, 66, h - 36);
+      ctx.fillStyle = '#e4eef5'; ctx.fillRect(x + w - 62, y + 8, 8, 16); // faucet
+    } else if (p.kind === 'fridge') {
+      ctx.fillStyle = '#bcced9'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#dceaf2'; ctx.fillRect(x + 4, y + 4, w - 8, h - 10);
+      ctx.fillStyle = '#8fa3b0'; ctx.fillRect(x + 4, y + h - 14, w - 8, 4); // handle seam
+      // Cute fridge magnets!
+      ctx.fillStyle = '#fae04b'; ctx.fillRect(x + 18, y + 24, 16, 16);
+      ctx.fillStyle = '#ff6b80'; ctx.fillRect(x + 46, y + 20, 12, 12);
+      ctx.fillStyle = '#46d67a'; ctx.fillRect(x + 70, y + 36, 18, 14);
+    } else if (p.kind === 'island') {
+      // Butcher-block kitchen island with cutting board & big Swiss cheese wheel!
+      ctx.fillStyle = '#b58d5e'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#d9b382'; ctx.fillRect(x + 5, y + 5, w - 10, h - 10);
+      ctx.fillStyle = '#c49a68';
+      for (let py = y + 16; py < y + h - 8; py += 14) ctx.fillRect(x + 5, py, w - 10, 2);
+      // Cutting board + knife
+      ctx.fillStyle = '#f0dec0'; ctx.fillRect(x + 28, y + 18, 64, 48);
+      ctx.fillStyle = '#9aa4b2'; ctx.fillRect(x + 42, y + 34, 32, 6);
+      ctx.fillStyle = '#362820'; ctx.fillRect(x + 74, y + 33, 12, 8);
+      // Plump yellow Swiss cheese wheel!
+      ctx.fillStyle = '#f5c742'; ctx.beginPath(); ctx.arc(x + w - 72, y + h / 2, 22, 0.35, Math.PI * 2); ctx.lineTo(x + w - 72, y + h / 2); ctx.fill();
+      ctx.fillStyle = '#d49a1c'; ctx.beginPath(); ctx.arc(x + w - 80, y + h / 2 - 6, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + w - 66, y + h / 2 + 8, 3, 0, Math.PI * 2); ctx.fill();
+    } else if (p.kind === 'dining') {
+      ctx.fillStyle = '#875938'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#a8724a'; ctx.fillRect(x + 6, y + 6, w - 12, h - 12);
+      ctx.fillStyle = '#c94452'; ctx.fillRect(x + 6, y + h / 2 - 12, w - 12, 24); // runner
+      ctx.fillStyle = '#e8eef2'; ctx.beginPath(); ctx.arc(x + w / 2, y + h / 2, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#7fd4ff'; ctx.fillRect(x + w / 2 - 6, y + h / 2 - 3, 12, 6); // fish on plate
+    } else if (p.kind === 'crates') {
+      ctx.fillStyle = '#755132'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#966b43'; ctx.fillRect(x + 6, y + 6, w - 12, h - 12);
+      ctx.strokeStyle = '#573a22'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(x + 8, y + 8); ctx.lineTo(x + w - 8, y + h - 8); ctx.moveTo(x + w - 8, y + 8); ctx.lineTo(x + 8, y + h - 8); ctx.stroke();
+    } else if (p.kind === 'barrels') {
+      for (const [bx, by] of [[x + 30, y + 32], [x + w - 30, y + 32], [x + w / 2, y + h - 30]]) {
+        ctx.fillStyle = '#5c3c24'; ctx.beginPath(); ctx.arc(bx, by, 24, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#8c5f3b'; ctx.beginPath(); ctx.arc(bx, by, 19, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#383a44'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(bx, by, 22, 0, Math.PI * 2); ctx.stroke();
+      }
+      continue;
+    } else if (p.kind === 'shed') {
+      // Shingled garden shed roof
+      ctx.fillStyle = '#6e4930'; ctx.fillRect(x, y, w, h);
+      for (let sy = y + 8; sy < y + h; sy += 12) {
+        ctx.fillStyle = (sy & 12) ? '#85593c' : '#784f34';
+        ctx.fillRect(x + 4, sy, w - 8, 10);
+      }
+      ctx.fillStyle = '#a8764c'; ctx.fillRect(x, y + h / 2 - 4, w, 8); // roof ridge beam
+    } else if (p.kind === 'planter') {
+      // Raised wooden Catnip Garden Planter brimming with glowing catnip leaves!
+      ctx.fillStyle = '#7d5232'; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#47301c'; ctx.fillRect(x + 8, y + 8, w - 16, h - 16);
+      for (let px = x + 16; px < x + w - 24; px += 28) {
+        for (let py = y + 14; py < y + h - 22; py += 26) {
+          ctx.drawImage(IMGS.catnip, px, py + Math.sin(tSec * 3 + px) * 1.5, 22, 22);
+        }
+      }
+    }
+    ctx.strokeStyle = '#1c1620'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+  }
+
+  // 8) Pet Feeding Mat + Catnip Bowl Shop Landmark in Living Room!
+  const nearBowl = Math.hypot(player.x - CATNIP_BOWL.x, player.y - CATNIP_BOWL.y) <= CATNIP_BOWL.r;
+  ctx.fillStyle = '#332b40'; ctx.fillRect(CATNIP_BOWL.x - 42, CATNIP_BOWL.y - 18, 84, 36);
+  ctx.strokeStyle = '#5c4e70'; ctx.lineWidth = 2; ctx.strokeRect(CATNIP_BOWL.x - 42, CATNIP_BOWL.y - 18, 84, 36);
+  // Water bowl left
+  ctx.fillStyle = '#d4dce6'; ctx.beginPath(); ctx.arc(CATNIP_BOWL.x - 24, CATNIP_BOWL.y, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#5ab4eb'; ctx.beginPath(); ctx.arc(CATNIP_BOWL.x - 24, CATNIP_BOWL.y, 7, 0, Math.PI * 2); ctx.fill();
+  // Kibble bowl right
+  ctx.fillStyle = '#d4dce6'; ctx.beginPath(); ctx.arc(CATNIP_BOWL.x + 24, CATNIP_BOWL.y, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#9e6234'; ctx.beginPath(); ctx.arc(CATNIP_BOWL.x + 24, CATNIP_BOWL.y, 7, 0, Math.PI * 2); ctx.fill();
+  // Center glowing Catnip Shop Bowl
+  ctx.fillStyle = nearBowl ? 'rgba(110, 240, 158, 0.32)' : 'rgba(70, 214, 122, 0.16)';
+  ctx.beginPath(); ctx.arc(CATNIP_BOWL.x, CATNIP_BOWL.y, 26, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#46d67a'; ctx.lineWidth = nearBowl ? 2 : 1.5; ctx.stroke();
+  ctx.drawImage(IMGS.catnip, CATNIP_BOWL.x - 12, CATNIP_BOWL.y - 12);
+  ctx.font = '800 10px monospace'; ctx.fillStyle = '#7ef29d';
+  ctx.fillText(nearBowl ? '[E] Магазин Мяты' : 'Миска Мяты', CATNIP_BOWL.x, CATNIP_BOWL.y - 28);
+
+  // 8) Catnip Drops
+  for (const n of nipDrops) {
+    const bob = Math.sin(tSec * 6 + n.x) * 2;
+    ctx.drawImage(IMGS.catnip, Math.round(n.x - 10), Math.round(n.y - 10 + bob), 20, 20);
+  }
+
+  // 9) Mice
+  for (const m of mice) {
+    ctx.save(); ctx.translate(Math.round(m.x), Math.round(m.y)); ctx.rotate(m.ang - Math.PI / 2);
+    ctx.drawImage(IMGS.mouse_top, -16, -16);
+    if (m.flash > 0) { ctx.strokeStyle = '#fae04b'; ctx.lineWidth = 2; ctx.strokeRect(-12, -12, 24, 24); }
+    ctx.restore();
+    if (m.hp < m.maxHp) {
+      ctx.fillStyle = '#140e1a'; ctx.fillRect(m.x - 11, m.y - 18, 22, 4);
+      ctx.fillStyle = '#ff586e'; ctx.fillRect(m.x - 10, m.y - 17, 20 * (m.hp / m.maxHp), 2);
+    }
+  }
+
+  // 10) Rat Bosses
+  for (const b of bosses) {
+    ctx.save(); ctx.translate(Math.round(b.x), Math.round(b.y)); ctx.rotate(b.ang - Math.PI / 2);
+    ctx.drawImage(IMGS.rat_boss_top, -40, -40, 80, 80);
+    ctx.restore();
+    if (b.shield) {
+      ctx.strokeStyle = '#fae04b'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(b.x, b.y, 38 + Math.sin(tSec * 10) * 3, 0, Math.PI * 2); ctx.stroke();
+    }
+    if (b.stunTimer > 0) {
+      ctx.fillStyle = '#7fd4ff'; ctx.font = '900 11px monospace';
+      ctx.fillText('ОГЛУШЁН!', b.x, b.y - 44);
+    }
+  }
+
+  // 11) Bebechad (Top-Down 111111.aseprite!)
+  ctx.save();
+  ctx.translate(Math.round(player.x), Math.round(player.y));
+  if (player.ultTimer > 0) {
+    ctx.strokeStyle = '#fae04b'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, 32 + Math.sin(tSec * 14) * 3, 0, Math.PI * 2); ctx.stroke();
+  }
+  const wScaleX = 1 + Math.sin(player.waddle) * 0.06;
+  ctx.rotate(player.faceAngle - Math.PI / 2);
+  ctx.scale(wScaleX, 1 / wScaleX);
+  ctx.drawImage(IMGS.bebechad_top, -28, -28, 56, 56);
+  ctx.restore();
+
+  // 12) Slashes, Projectiles, Particles & Floating Text
+  for (const s of slashes) {
+    ctx.save(); ctx.globalAlpha = s.life / s.maxLife; ctx.strokeStyle = s.col; ctx.lineWidth = 4;
+    ctx.beginPath();
+    if (s.full) ctx.arc(s.x, s.y, s.r * (1.1 - 0.3 * (s.life / s.maxLife)), 0, Math.PI * 2);
+    else ctx.arc(s.x, s.y, s.r * 0.72, s.ang - 1.1, s.ang + 1.1);
+    ctx.stroke(); ctx.restore();
+  }
+  for (const p of projs) {
+    ctx.fillStyle = p.kind === 'yarn' ? '#eb5c8a' : (p.kind === 'bone' ? '#ffffff' : '#fad444');
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.kind === 'yarn' ? 7 : (p.kind === 'cheese' ? 6 : 4), 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#16111e'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  for (const pt of particles) { ctx.fillStyle = pt.c; ctx.fillRect(Math.round(pt.x), Math.round(pt.y), 3, 3); }
+  ctx.textAlign = 'center';
+  for (const f of floats) {
+    ctx.globalAlpha = Math.min(1, f.life * 2);
+    ctx.font = f.big ? '900 13px monospace' : '800 11px monospace';
+    ctx.fillStyle = '#120d1a'; ctx.fillText(f.txt, f.x + 1, f.y + 1);
+    ctx.fillStyle = f.col; ctx.fillText(f.txt, f.x, f.y);
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  requestAnimationFrame(loop);
+}
+
+function resetGame() {
+  player.x = 480; player.y = 340; player.hp = player.maxHp; player.hurtCd = 1.0;
+  mice = []; bosses = []; projs = []; nipDrops = [];
+  addFloat(player.x, player.y - 28, 'ВОЗРОЖДЕНИЕ BEBECHAD!', '#fae04b', true);
+}
+
+// ====================================================== CONTROLS
+$('shopBtn').onclick = () => toggleShop();
+$('closeShopBtn').onclick = () => toggleShop(false);
+$('bossBtn').onclick = () => { if (!shopOpen && !dlgActive && !mg.active) spawnRatBoss(); };
+$('mgBtn').onclick = () => {
+  if (shopOpen || dlgActive || mg.active) return;
+  if (bosses.length === 0) spawnRatBoss();
+  if (dlgActive) { dlgQueue.length = 0; dlgActive = null; $('dialogueBox').classList.remove('show'); }
+  if (bosses[0]) { bosses[0].shield = true; startBossMinigame(bosses[0], 3); }
+};
+const MONOLOGUE_BANK = [
+  ['Bebechad', 'portrait_bebechad', 'Мой дом — моя крепость. Но без Кошачьей Мяты даже Гигачад не работает!'],
+  ['Bebechad', 'portrait_cat_angry', 'ЭЙ! НЕ СМЕЙТЕ ГРЫЗТЬ МОЮ КОГТЕТОЧКУ!! Я только вчера её распушил!'],
+  ['Bebechad', 'portrait_bebechad', 'Три правила выживания: спи на диване, охраняй холодильник, качай лапы.'],
+  ['Bebechad', 'portrait_cat_angry', 'КАК ОНИ ВООБЩЕ ПРОЛЕЗЛИ ИЗ ПОДВАЛА?! Надо было замуровать эти дыры ещё в пятницу!'],
+  ['Bebechad', 'portrait_bebechad', 'Когда хозяева вернутся, я просто сяду у пустой миски и сделаю невинный взгляд.'],
+  ['Bebechad', 'portrait_cat_angry', 'СТОП, ОНИ ТРОГАЛИ МОЙ КЛУБОК?! Всё, дипломатия официально закончена!'],
+  ['Bebechad', 'portrait_bebechad', 'Кошачья Мята в крови, когти наточены. Крысиные боссы — в очередь.'],
+];
+$('dlgBtn').onclick = () => {
+  if (mg.active || shopOpen) return;
+  const [sp, pk, tx] = MONOLOGUE_BANK[monologueIdx % MONOLOGUE_BANK.length];
+  monologueIdx++;
+  pushDialogue(sp, pk, tx);
+};
+
+addEventListener('keydown', e => {
+  if (dlgActive) {
+    if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); advanceDialogue(); }
+    return;
+  }
+  if (mg.active) {
+    if (mg.stage === 0 && e.code === 'Space') { e.preventDefault(); handleMinigameTimingPress(); }
+    else if (mg.stage === 1) {
+      const need = mg.keysSeq[mg.keyIdx];
+      if (need && e.code === need.code) {
+        mg.keyIdx++;
+        renderQteKeys();
+        if (mg.keyIdx >= mg.keysSeq.length) finishBossMinigame(true, mg.perfectBar);
+      }
+    }
+    return;
+  }
+  if (e.code === 'KeyB' || e.code === 'Tab' || (e.code === 'Escape' && shopOpen)) {
+    e.preventDefault(); toggleShop(); return;
+  }
+  if (shopOpen) {
+    const m = /^Digit([1-8])$/.exec(e.code);
+    if (m) buyUpgrade(parseInt(m[1], 10) - 1);
+    return;
+  }
+  keys[e.code] = true;
+  if (e.code === 'KeyE' && Math.hypot(player.x - CATNIP_BOWL.x, player.y - CATNIP_BOWL.y) <= CATNIP_BOWL.r) toggleShop(true);
+  if (e.code === 'KeyF') triggerUlt();
+  if (e.code === 'KeyT') spawnRatBoss();
+  if (e.code === 'KeyM') $('mgBtn').click();
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+function applyUiTheme(num) {
+  for (let i = 1; i <= 10; i++) document.body.classList.remove(`theme-${i}`);
+  if (num >= 1 && num <= 10) document.body.classList.add(`theme-${num}`);
+  if ($('themeSelect')) $('themeSelect').value = String(num || 0);
+}
+if ($('themeSelect')) {
+  $('themeSelect').onchange = e => {
+    applyUiTheme(parseInt(e.target.value, 10) || 0);
+    e.target.blur();
+  };
+}
+const urlTheme = new URLSearchParams(location.search).get('theme');
+applyUiTheme(urlTheme !== null ? parseInt(urlTheme, 10) : 3);
+</script>
+</body>
+</html>

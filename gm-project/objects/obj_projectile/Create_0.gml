@@ -1,0 +1,9 @@
+kind = "claw";
+dmg = 18;
+dir = 0;
+spd = 0;
+rad = 28;
+bounces = 0;
+pierce = 1;
+life = 30;
+hit_list = [];

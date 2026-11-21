@@ -1,0 +1,22 @@
+{
+  "$GMWindowsOptions": "v1",
+  "%Name": "Windows",
+  "name": "Windows",
+  "option_windows_allow_fullscreen_switching": true,
+  "option_windows_borderless": false,
+  "option_windows_company_info": "Bebechad",
+  "option_windows_copyright_info": "",
+  "option_windows_description_info": "Bebechad: Home Alone",
+  "option_windows_display_cursor": true,
+  "option_windows_display_name": "Bebechad: Home Alone",
+  "option_windows_enable_steam": false,
+  "option_windows_disable_sandbox": false,
+  "option_windows_interpolate_pixels": false,
+  "option_windows_product_info": "BebechadHomeAlone",
+  "option_windows_resize_window": true,
+  "option_windows_scale": 0,
+  "option_windows_start_fullscreen": false,
+  "option_windows_vsync": true,
+  "resourceType": "GMWindowsOptions",
+  "resourceVersion": "2.0"
+}

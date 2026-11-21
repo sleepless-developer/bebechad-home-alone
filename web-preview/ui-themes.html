@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Bebechad — Галерея 10 стилей интерфейса и диалогов</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #12101a; color: #f2efe9; font-family: system-ui, -apple-system, sans-serif;
+    padding: 20px 24px 48px;
+  }
+  header {
+    max-width: 1280px; margin: 0 auto 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    border-bottom: 2px solid #2c263b; padding-bottom: 14px;
+  }
+  header h1 { font-size: 22px; color: #fae04b; }
+  header p { font-size: 13px; color: #b7bfd1; margin-top: 3px; }
+  .back-btn {
+    background: #46d67a; color: #0f2116; text-decoration: none; font-weight: 900; font-size: 13px;
+    padding: 8px 16px; border-radius: 4px; border: 2px solid #0f2116;
+  }
+  .grid {
+    max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(540px, 1fr)); gap: 20px;
+  }
+  .showcase {
+    background: #1b1726; border: 2px solid #322b44; border-radius: 8px; padding: 14px 16px 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .sc-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .sc-title { font-weight: 900; font-size: 15px; color: #fff; }
+  .sc-tag { font: 800 11px monospace; color: #9ea6bc; }
+  .try-btn {
+    background: #2f2842; color: #fae04b; border: 1.5px solid #f5c652; border-radius: 4px;
+    padding: 5px 12px; font: 800 12px system-ui; text-decoration: none; white-space: nowrap;
+  }
+  .try-btn:hover { background: #43385e; }
+  .stage {
+    position: relative; border-radius: 5px; padding: 14px; overflow: hidden;
+    background:
+      linear-gradient(rgba(18,14,24,0.35), rgba(18,14,24,0.35)),
+      repeating-linear-gradient(0deg, #845b38 0 19px, #6c4729 19px 20px);
+    display: flex; flex-direction: column; gap: 12px; min-height: 196px; justify-content: space-between;
+  }
+  .px { image-rendering: pixelated; }
+
+  /* Shared mock primitives */
+  .m-hud { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 6px 10px; font-size: 11px; }
+  .m-hp { width: 110px; height: 14px; position: relative; overflow: hidden; }
+  .m-hp-fill { height: 100%; width: 76%; }
+  .m-dlg { display: flex; align-items: center; gap: 12px; padding: 10px 12px; position: relative; }
+  .m-port { width: 72px; height: 72px; flex-shrink: 0; image-rendering: pixelated; object-fit: contain; }
+  .m-spk { font-weight: 900; font-size: 12px; margin-bottom: 4px; }
+  .m-txt { font-size: 13px; line-height: 1.35; }
+
+  /* ============ THEME 1: КАРТОННАЯ КОРОБКА / СКРАПБУК ============ */
+  .t1 .m-hud {
+    background: #dfbf94; color: #3b2616; border: 2px dashed #7a5230; border-radius: 3px;
+    box-shadow: 3px 3px 0 rgba(40,24,10,0.45); font-family: monospace; font-weight: 800;
+  }
+  .t1 .m-hp { background: #a88258; border: 2px solid #4a2f18; }
+  .t1 .m-hp-fill { background: #d94c4c; }
+  .t1 .m-dlg {
+    background: #e6caa1; color: #2e1d10; border: 3px solid #754c29; border-radius: 2px;
+    box-shadow: 4px 5px 0 rgba(25,14,6,0.5);
+  }
+  .t1 .m-dlg::before, .t1 .m-dlg::after {
+    content: ""; position: absolute; width: 34px; height: 11px; background: rgba(255, 248, 210, 0.72);
+    border: 1px solid rgba(150, 128, 86, 0.4);
+  }
+  .t1 .m-dlg::before { top: -6px; left: 16px; transform: rotate(-10deg); }
+  .t1 .m-dlg::after { top: -6px; right: 16px; transform: rotate(9deg); }
+  .t1 .m-port { background: #fff9ec; border: 3px solid #fff; box-shadow: 2px 3px 0 rgba(0,0,0,0.28); transform: rotate(-2deg); }
+  .t1 .m-spk { color: #9c3424; font-family: monospace; }
+
+  /* ============ THEME 2: КОМИКС / ПОП-АРТ (PERSONA / SCOTT PILGRIM) ============ */
+  .t2 .m-hud {
+    background: #ffde2e; color: #111; border: 3px solid #111; transform: skewX(-8deg);
+    box-shadow: 5px 5px 0 #111; font-weight: 900; text-transform: uppercase;
+  }
+  .t2 .m-hp { background: #111; border: 2px solid #111; }
+  .t2 .m-hp-fill { background: #ff2e55; }
+  .t2 .m-dlg {
+    background: #fff; color: #111; border: 4px solid #111; transform: skewX(-3deg);
+    box-shadow: 7px 7px 0 #ff2e55, 10px 10px 0 #111;
+    background-image: radial-gradient(#e4e4e4 1px, transparent 1px); background-size: 6px 6px;
+  }
+  .t2 .m-port {
+    background: #ffde2e; border: 3px solid #111; box-shadow: 4px 4px 0 #111;
+    margin-top: -26px; width: 84px; height: 84px;
+  }
+  .t2 .m-spk { display: inline-block; background: #111; color: #ffde2e; padding: 2px 8px; font-style: italic; }
+
+  /* ============ THEME 3: УЮТНЫЙ ПИКСЕЛЬ-ДЕРЕВО (STARDEW VALLEY) ============ */
+  .t3 .m-hud {
+    background: #f5e2bc; color: #4a2c16; border: 4px solid #7d4721;
+    box-shadow: inset 0 0 0 2px #d49d57, 0 4px 0 #3d210d; font-weight: 800;
+  }
+  .t3 .m-hp { background: #6b3d1e; border: 2px solid #3d210d; }
+  .t3 .m-hp-fill { background: #60c44b; }
+  .t3 .m-dlg {
+    background: #f7e6c4; color: #3d2311; border: 4px solid #7a441e;
+    box-shadow: inset 0 0 0 3px #d9a259, 0 6px 14px rgba(0,0,0,0.45);
+  }
+  .t3 .m-port { background: #ebd09e; border: 3px solid #7a441e; box-shadow: inset 0 0 0 2px #fff2d6; }
+  .t3 .m-spk { color: #8c2d19; border-bottom: 2px solid #d4a05b; padding-bottom: 2px; }
+
+  /* ============ THEME 4: UNDERTALE / DELTARUNE ============ */
+  .t4 .m-hud {
+    background: #000; color: #fff; border: 3px solid #fff; font: 800 12px monospace;
+  }
+  .t4 .m-hp { background: #c00; border: 2px solid #fff; }
+  .t4 .m-hp-fill { background: #ff0; }
+  .t4 .m-dlg {
+    background: #000; color: #fff; border: 4px solid #fff; font-family: monospace;
+  }
+  .t4 .m-port { background: #000; border: 2px solid #fff; }
+  .t4 .m-spk { color: #ff0; font-family: monospace; }
+  .t4 .m-txt { font-family: monospace; font-size: 13px; }
+
+  /* ============ THEME 5: НЕОН-VHS / KATANA ZERO ============ */
+  .t5 .m-hud {
+    background: rgba(12, 8, 28, 0.92); color: #6ef2ff; border: 2px solid #ff2ec4;
+    box-shadow: 0 0 12px rgba(255,46,196,0.45); font: 800 11px monospace;
+  }
+  .t5 .m-hp { background: #260d29; border: 1px solid #6ef2ff; }
+  .t5 .m-hp-fill { background: linear-gradient(90deg, #ff2ec4, #6ef2ff); }
+  .t5 .m-dlg {
+    background: repeating-linear-gradient(0deg, rgba(16,10,36,0.95) 0 2px, rgba(24,14,52,0.95) 2px 4px);
+    color: #e8fcff; border: 2px solid #6ef2ff;
+    box-shadow: 0 0 16px rgba(110,242,255,0.35), inset 0 0 12px rgba(255,46,196,0.22);
+    font-family: monospace;
+  }
+  .t5 .m-port { background: #0c071c; border: 2px solid #ff2ec4; box-shadow: 2px 0 0 #6ef2ff, -2px 0 0 #ff2ec4; }
+  .t5 .m-spk { color: #ff5ce1; letter-spacing: 1px; }
+
+  /* ============ THEME 6: GAME BOY COLOR / РЕТРО-КАРТРИДЖ ============ */
+  .t6 .m-hud {
+    background: #d8e8a8; color: #1b3622; border: 3px solid #1b3622;
+    box-shadow: inset 0 0 0 2px #88b868; font: 900 11px monospace;
+  }
+  .t6 .m-hp { background: #3b6944; border: 2px solid #1b3622; }
+  .t6 .m-hp-fill { background: #9ee068; }
+  .t6 .m-dlg {
+    background: #e4f2be; color: #14291a; border: 4px solid #14291a;
+    box-shadow: inset 0 0 0 3px #8ec06c; font-family: monospace;
+  }
+  .t6 .m-port { background: #c2db88; border: 3px solid #14291a; }
+  .t6 .m-spk { color: #14291a; background: #98cc6e; display: inline-block; padding: 1px 6px; }
+
+  /* ============ THEME 7: ХОЛОДИЛЬНИК С МАГНИТАМИ И СТИКЕРАМИ ============ */
+  .t7 .m-hud {
+    background: #f4f8fb; color: #243342; border: 2px solid #b5c6d4; border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.28); font-weight: 800;
+  }
+  .t7 .m-hp { background: #d6e2eb; border-radius: 6px; }
+  .t7 .m-hp-fill { background: #ff6378; border-radius: 6px; }
+  .t7 .m-dlg {
+    background: #fff59d; color: #2b2416; border: 2px solid #e0ca53; border-radius: 2px;
+    box-shadow: 4px 6px 12px rgba(0,0,0,0.35); transform: rotate(-0.8deg);
+  }
+  .t7 .m-dlg::before {
+    content: ""; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    width: 16px; height: 16px; border-radius: 50%; background: #ff586e; border: 2px solid #9c1f33;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.35);
+  }
+  .t7 .m-port { background: #fff; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.22); border-radius: 4px; }
+  .t7 .m-spk { color: #b83244; }
+
+  /* ============ THEME 8: КОШАЧЬЯ ГАЗЕТА "THE DAILY MEOW" ============ */
+  .t8 .m-hud {
+    background: #e9e0cc; color: #1c1916; border-top: 3px double #1c1916; border-bottom: 3px double #1c1916;
+    font-family: Georgia, serif; font-weight: 900;
+  }
+  .t8 .m-hp { background: #c9bfa9; border: 1.5px solid #1c1916; }
+  .t8 .m-hp-fill { background: #9e2226; }
+  .t8 .m-dlg {
+    background: #efe7d4; color: #1b1814; border: 3px double #1b1814;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.45); font-family: Georgia, serif;
+  }
+  .t8 .m-port { background: #d8ceba; border: 2px solid #1b1814; filter: sepia(0.28) contrast(1.08); }
+  .t8 .m-spk { color: #9e2226; font-family: Georgia, serif; letter-spacing: 1px; border-bottom: 1px solid #1b1814; }
+
+  /* ============ THEME 9: МЯТНО-БОТАНИЧЕСКИЙ (MODERN INDIE) ============ */
+  .t9 .m-hud {
+    background: rgba(16, 34, 26, 0.94); color: #e6faee; border: 2px solid #69e098; border-radius: 8px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.35); font-weight: 700;
+  }
+  .t9 .m-hp { background: #224737; border-radius: 8px; }
+  .t9 .m-hp-fill { background: linear-gradient(90deg, #43c978, #9ef5be); border-radius: 8px; }
+  .t9 .m-dlg {
+    background: rgba(18, 38, 29, 0.96); color: #ecfaf2; border: 2px solid #69e098; border-radius: 10px;
+    box-shadow: inset 0 0 0 2px #295742, 0 10px 24px rgba(0,0,0,0.45);
+  }
+  .t9 .m-port { background: #10241b; border: 2px solid #9ef5be; border-radius: 8px; }
+  .t9 .m-spk { color: #8af5b2; }
+
+  /* ============ THEME 10: АРКАДНЫЙ БИТЭМАП 90-Х (METAL SLUG / STREETS OF RAGE) ============ */
+  .t10 .m-hud {
+    background: linear-gradient(180deg, #424f70, #1e2438); color: #fff; border: 2px solid #9cb4e8;
+    box-shadow: inset 0 2px 0 #7086b8, 0 4px 0 #0f1320; font: 900 11px monospace;
+  }
+  .t10 .m-hp { background: #3b0f1b; border: 2px solid #fff; transform: skewX(-14deg); }
+  .t10 .m-hp-fill { background: linear-gradient(90deg, #ff3850, #ffe038); }
+  .t10 .m-dlg {
+    background: linear-gradient(180deg, #273766, #141c38); color: #fff; border: 3px solid #ffba24;
+    box-shadow: inset 0 0 0 2px #6b88d6, 0 6px 0 #0b1020; font-family: monospace;
+  }
+  .t10 .m-port { background: linear-gradient(180deg, #ffba24, #d95626); border: 2px solid #fff; }
+  .t10 .m-spk { color: #ffe042; text-shadow: 2px 2px 0 #991a2e; font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>🎨 Bebechad: 10 вариантов стиля интерфейса и диалогового окна</h1>
+    <p>Нажми <b>«Применить в игре →»</b> на любом варианте, чтобы сразу побегать с ним вживую!</p>
+  </div>
+  <a class="back-btn" href="./index.html">← Вернуться в игру</a>
+</header>
+
+<div class="grid" id="gallery"></div>
+
+<script>
+const THEMES = [
+  { id: 1, cls: 't1', name: '1. Картонная Коробка / Скрапбук', tag: 'Крафт · Скотч · Лапки',
+    port: './assets/spr_portrait_bebechad.png', spk: 'BEBECHAD', txt: 'Хозяева уехали, коробка моя. Кто погрыз картон — тому когти!' },
+  { id: 2, cls: 't2', name: '2. Комикс / Поп-арт (Persona / Scott Pilgrim)', tag: 'Скосы · Халфтон · Портрет поверх',
+    port: './assets/spr_portrait_cat_angry.png', spk: 'BEBECHAD!!', txt: 'ЭЙ!! КТО НАДКУСИЛ СЫР И ОСТАВИЛ КРОШКИ У МОЕГО ХОЛОДИЛЬНИКА?!' },
+  { id: 3, cls: 't3', name: '3. Уютный Пиксель-Дерево (Stardew Valley)', tag: 'Пергамент · Резное дерево',
+    port: './assets/spr_portrait_bebechad.png', spk: 'Bebechad', txt: 'Тёплый пол, свежая кошачья мята и ни одной крысы к ужину.' },
+  { id: 4, cls: 't4', name: '4. Классика Undertale / Deltarune', tag: 'Чёрно-белый ретро-минимализм',
+    port: './assets/spr_portrait_rat.png', spk: '* СЭР СЫРОГРЫЗ', txt: '* Хе-хе! Хозяев нет — теперь этот холодильник НАШ!' },
+  { id: 5, cls: 't5', name: '5. Неон-VHS / Katana ZERO', tag: 'Сканлайны · Неон · Глитч',
+    port: './assets/spr_portrait_cat_angry.png', spk: 'REC ● BEBECHAD', txt: 'СИГНАЛ ТРЕВОГИ: МЫШИ В ПОДВАЛЕ. ВКЛЮЧАЮ РЕЖИМ ГИГАЧАДА.' },
+  { id: 6, cls: 't6', name: '6. Game Boy Color / Ретро-Картридж', tag: 'Оливковая палитра · 8-bit',
+    port: './assets/spr_portrait_bebechad.png', spk: 'BEBECHAD LV.4', txt: 'Найдена Кошачья Мята! Сила царапок выросла. [A] Далее' },
+  { id: 7, cls: 't7', name: '7. Холодильник с Магнитами и Стикерами', tag: 'Белая эмаль · Жёлтый стикер',
+    port: './assets/spr_portrait_cat_angry.png', spk: 'ЗАМЕТКА НА ХОЛОДИЛЬНИКЕ', txt: 'План на день: 1) Поспать. 2) Выгнать Крысиного Барона. 3) Поесть.' },
+  { id: 8, cls: 't8', name: '8. Кошачья Газета «The Daily Meow»', tag: 'Газета · Нуар · Фоторобот',
+    port: './assets/spr_portrait_rat.png', spk: 'СРОЧНЫЙ ВЫПУСК · РАЗЫСКИВАЕТСЯ', txt: 'Дерзкая банда грызунов прорвалась на кухню! Главный подозреваемый — в короне.' },
+  { id: 9, cls: 't9', name: '9. Мятно-Ботанический (Modern Indie)', tag: 'Тёмная хвоя · Мята · Чистый UI',
+    port: './assets/spr_portrait_bebechad.png', spk: 'Bebechad · Хранитель Мяты', txt: 'Свежая травка во дворе, грядка мяты и мягкие лапки. Пора на охоту.' },
+  { id: 10, cls: 't10', name: '10. Аркадный Битэмап 90-х (Metal Slug)', tag: 'Металл · Скошенный HP · Аркада',
+    port: './assets/spr_portrait_rat.png', spk: 'WARNING! BOSS: СЭР СЫРОГРЫЗ', txt: 'STAGE 1 — КУХНЯ! ПРОБЕЙ СЫРНЫЙ ЩИТ И ПОЛУЧИ ГИГАЧАД-БОНУС!' },
+];
+
+const wrap = document.getElementById('gallery');
+for (const t of THEMES) {
+  const card = document.createElement('div');
+  card.className = 'showcase';
+  card.innerHTML = `
+    <div class="sc-head">
+      <div>
+        <div class="sc-title">${t.name}</div>
+        <div class="sc-tag">${t.tag}</div>
+      </div>
+      <a class="try-btn" href="./index.html?theme=${t.id}">Применить в игре →</a>
+    </div>
+    <div class="stage ${t.cls}">
+      <div class="m-hud">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span>HP</span>
+          <div class="m-hp"><div class="m-hp-fill"></div></div>
+        </div>
+        <div>🌿 МЯТА: <b>24</b> · ВОЛНА <b>2</b> · КУХНЯ</div>
+      </div>
+      <div class="m-dlg">
+        <img class="m-port px" src="${t.port}" alt="">
+        <div style="flex:1">
+          <div class="m-spk">${t.spk}</div>
+          <div class="m-txt">${t.txt}</div>
+        </div>
+      </div>
+    </div>
+  `;
+  wrap.appendChild(card);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+max_hp = 380 + global.boss_count * 220;
+hp = max_hp;
+spd = 1.9;
+flash_timer = 0;
+stun_timer = 0;
+shield_active = false;
+phase_triggered_1 = false;
+phase_triggered_2 = false;
+shoot_cd = 90;
